@@ -5,6 +5,24 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/**
+ * Kürzel für eine Organisation ohne eigenes Logo.
+ *
+ * Verwendet die Anfangsbuchstaben der ersten beiden Wörter, weil die ersten
+ * zwei Buchstaben des Namens wenig aussagen: "Guggenmusik Chesslete Olten"
+ * ergäbe sonst "GU", "Oltner Fasnacht" nur "OL".
+ */
+export function organizationInitials(name: string): string {
+  const words = name
+    .split(/[\s\u2013\u2014-]+/)
+    .map((word) => word.replace(/[^\p{L}\p{N}]/gu, ""))
+    .filter(Boolean);
+
+  if (words.length === 0) return "?";
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[1][0]).toUpperCase();
+}
+
 /** Erzeugt einen URL-tauglichen Slug inklusive korrekter Umlautbehandlung. */
 export function slugify(input: string): string {
   return input

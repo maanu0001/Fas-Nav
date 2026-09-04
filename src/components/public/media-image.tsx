@@ -1,7 +1,7 @@
 import Image from "next/image";
 
 import { LogoMark } from "@/components/ui/logo";
-import { cn } from "@/lib/utils";
+import { cn, organizationInitials } from "@/lib/utils";
 
 export type MediaLike = {
   url: string;
@@ -33,13 +33,18 @@ export function MediaImage({
     return (
       <div
         className={cn(
-          "flex items-center justify-center bg-gradient-to-br from-primary-100 via-secondary to-primary-50",
+          // Wie beim echten Bild (next/image mit "fill") den Elternbereich
+          // vollständig ausfüllen. Ohne diese Positionierung schrumpft der
+          // Platzhalter auf die Höhe des Signets und sitzt als scheinbar
+          // loses Kästchen am oberen Rand.
+          "absolute inset-0 flex items-center justify-center",
+          "bg-gradient-to-br from-primary-100 via-secondary to-primary-50",
           className,
         )}
         role="img"
         aria-label={fallbackLabel ?? alt}
       >
-        <LogoMark className="h-11 w-11 text-base opacity-30" variant="dark" />
+        <LogoMark className="h-11 w-11 text-base opacity-20" variant="dark" />
       </div>
     );
   }
@@ -72,13 +77,16 @@ export function LogoImage({
     return (
       <div
         className={cn(
-          "flex shrink-0 items-center justify-center rounded-xl border border-border bg-white font-display font-bold text-primary-700",
+          // "relative" wie im Zweig mit Bild: Das Kürzel liegt auf Karten
+          // bewusst über dem Kopfbereich. Ohne eigene Positionierung würde es
+          // vom dortigen Platzhalter verdeckt.
+          "relative flex shrink-0 items-center justify-center rounded-xl border border-border bg-white font-display font-bold text-primary-700",
           className,
         )}
-        style={{ width: size, height: size }}
+        style={{ width: size, height: size, fontSize: Math.round(size * 0.34) }}
         aria-hidden
       >
-        {name.slice(0, 2).toUpperCase()}
+        {organizationInitials(name)}
       </div>
     );
   }

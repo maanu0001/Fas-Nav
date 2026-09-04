@@ -6,6 +6,7 @@ import { CalendarDays, Globe, Mail, MapPin, Music2, Phone } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { SOCIAL_PLATFORM_LABELS } from "@/lib/constants";
 import { formatDateRange } from "@/lib/dates";
+import { organizationInitials } from "@/lib/utils";
 import type { EditorState } from "@/components/dashboard/editor/types";
 
 /**
@@ -45,7 +46,7 @@ export function OrganizationPreview({
               <Image src={state.logo.url} alt="" fill sizes="56px" className="object-contain p-1" />
             ) : (
               <div className="flex h-full items-center justify-center font-display text-sm font-bold text-primary-700">
-                {(state.name || "FN").slice(0, 2).toUpperCase()}
+                {state.name ? organizationInitials(state.name) : "FN"}
               </div>
             )}
           </div>
