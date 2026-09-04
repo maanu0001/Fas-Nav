@@ -13,7 +13,9 @@ import { organizationStats } from "@/lib/analytics";
 import { FEATURE_KEYS } from "@/lib/constants";
 import { getDashboardContext } from "@/lib/dashboard-context";
 import { prisma } from "@/lib/prisma";
+import { can } from "@/lib/rbac";
 import { hasFeature } from "@/lib/subscription";
+import type { Role } from "@prisma/client";
 import { formatChf } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -23,11 +25,14 @@ export const metadata: Metadata = { title: "Statistik" };
 export default async function StatisticsPage() {
   const context = await getDashboardContext();
 
-  if (context.staff) return <PlatformStatistics />;
+  if (context.staff) return <PlatformStatistics role={context.user.role as Role} />;
   return <OrganizationStatistics context={context} />;
 }
 
-async function PlatformStatistics() {
+async function PlatformStatistics({ role }: { role: Role }) {
+  // Umsatzzahlen sind der Administration vorbehalten und werden für andere
+  // Rollen weder abgefragt noch an den Client gegeben.
+  const showRevenue = can(role, "viewFinancialFigures");
   const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
   const [views, visitors, topOrgs, topEvents, searches, orgCount, newOrgs, activeSubs, revenue] =
@@ -65,8 +70,10 @@ async function PlatformStatistics() {
       }),
       prisma.organization.count(),
       prisma.organization.count({ where: { createdAt: { gte: since } } }),
-      prisma.subscription.count({ where: { status: "ACTIVE" } }),
-      prisma.payment.aggregate({ where: { status: "PAID" }, _sum: { amountChf: true } }),
+      showRevenue ? prisma.subscription.count({ where: { status: "ACTIVE" } }) : 0,
+      showRevenue
+        ? prisma.payment.aggregate({ where: { status: "PAID" }, _sum: { amountChf: true } })
+        : null,
     ]);
 
   // Namen der meistgesehenen Einträge nachladen.
@@ -98,12 +105,14 @@ async function PlatformStatistics() {
         <StatCard label="Seitenaufrufe" value={views} icon="chart" hint="letzte 30 Tage" />
         <StatCard label="Besucher" value={visitors.length} icon="users" hint="pseudonym gezählt" />
         <StatCard label="Organisationen" value={orgCount} icon="building" hint={`${newOrgs} neu`} />
-        <StatCard
-          label="Umsatz (bezahlt)"
-          value={formatChf(Number(revenue._sum.amountChf ?? 0))}
-          icon="wallet"
-          hint={`${activeSubs} aktive Abos`}
-        />
+        {showRevenue && revenue ? (
+          <StatCard
+            label="Umsatz (bezahlt)"
+            value={formatChf(Number(revenue._sum.amountChf ?? 0))}
+            icon="wallet"
+            hint={`${activeSubs} aktive Abos`}
+          />
+        ) : null}
       </StatGrid>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">

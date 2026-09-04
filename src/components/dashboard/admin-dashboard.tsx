@@ -13,7 +13,7 @@ import {
 import type { DashboardContext } from "@/lib/dashboard-context";
 import { formatDateShort, relativeTime, startOfToday } from "@/lib/dates";
 import { prisma } from "@/lib/prisma";
-import { isAdmin } from "@/lib/rbac";
+import { can, isAdmin } from "@/lib/rbac";
 import { formatChf } from "@/lib/utils";
 import type { Role } from "@prisma/client";
 
@@ -21,6 +21,12 @@ export async function AdminDashboard({ context }: { context: DashboardContext })
   const today = startOfToday();
   const soon = new Date(Date.now() + SUBSCRIPTION_EXPIRY_WARNING_DAYS * 24 * 60 * 60 * 1000);
   const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+  const role = context.user.role as Role;
+  // Abonnement- und Zahlungszahlen sind kaufmännische Angaben. Sie werden für
+  // Konten ohne dieses Recht gar nicht erst abgefragt und erreichen den Client
+  // damit auch nicht als Beiwerk.
+  const showFinancials = can(role, "viewFinancialFigures");
 
   const [
     carnivals,
@@ -42,15 +48,19 @@ export async function AdminDashboard({ context }: { context: DashboardContext })
     prisma.user.count({ where: { createdAt: { gte: monthAgo } } }),
     prisma.ticket.count({ where: { status: { in: ["OPEN", "IN_PROGRESS"] } } }),
     prisma.event.count({ where: { startDate: { gte: today }, status: "PUBLISHED" } }),
-    prisma.subscription.count({ where: { status: "ACTIVE" } }),
-    prisma.subscription.count({
-      where: { status: { in: ["ACTIVE", "TRIAL"] }, endDate: { gte: today, lte: soon } },
-    }),
-    prisma.payment.aggregate({
-      where: { status: "PENDING" },
-      _sum: { amountChf: true },
-      _count: true,
-    }),
+    showFinancials ? prisma.subscription.count({ where: { status: "ACTIVE" } }) : 0,
+    showFinancials
+      ? prisma.subscription.count({
+          where: { status: { in: ["ACTIVE", "TRIAL"] }, endDate: { gte: today, lte: soon } },
+        })
+      : 0,
+    showFinancials
+      ? prisma.payment.aggregate({
+          where: { status: "PENDING" },
+          _sum: { amountChf: true },
+          _count: true,
+        })
+      : null,
     prisma.organization.count({ where: { status: { in: ["DRAFT", "PENDING_REVIEW"] } } }),
     prisma.ticket.findMany({
       where: { status: { in: ["OPEN", "IN_PROGRESS", "WAITING_FOR_CUSTOMER"] } },
@@ -80,7 +90,6 @@ export async function AdminDashboard({ context }: { context: DashboardContext })
     }),
   ]);
 
-  const role = context.user.role as Role;
 
   return (
     <>
@@ -124,6 +133,12 @@ export async function AdminDashboard({ context }: { context: DashboardContext })
         />
       </section>
 
+      {/*
+        Ohne die kaufmännischen Kacheln bleibt für die zweite Reihe nur eine
+        einzelne Kachel übrig. Sie wandert dann in die erste Reihe, damit kein
+        Abschnitt mit einer einsamen Kachel und keine leere Rasterzelle
+        entsteht. Das Raster selbst passt die Spaltenzahl an (siehe StatGrid).
+      */}
       <section className="mb-8" aria-label="Kennzahlen">
         <StatGrid>
           <StatCard
@@ -152,41 +167,51 @@ export async function AdminDashboard({ context }: { context: DashboardContext })
             href="/dashboard/tickets"
             tone={openTickets > 0 ? "warning" : "default"}
           />
+          {showFinancials ? null : (
+            <StatCard
+              label="Kommende Veranstaltungen"
+              value={upcomingEvents}
+              icon="calendar"
+              href="/dashboard/agenda"
+            />
+          )}
         </StatGrid>
       </section>
 
-      <section className="mb-8" aria-label="Weitere Kennzahlen">
-        <StatGrid>
-          <StatCard
-            label="Kommende Veranstaltungen"
-            value={upcomingEvents}
-            icon="calendar"
-            href="/dashboard/agenda"
-          />
-          <StatCard
-            label="Aktive Abonnemente"
-            value={activeSubscriptions}
-            icon="badge"
-            href="/dashboard/abonnemente"
-          />
-          <StatCard
-            label="Laufen bald ab"
-            value={expiringSubscriptions}
-            hint={`in den nächsten ${SUBSCRIPTION_EXPIRY_WARNING_DAYS} Tagen`}
-            icon="badge"
-            href="/dashboard/abonnemente?filter=expiring"
-            tone={expiringSubscriptions > 0 ? "warning" : "default"}
-          />
-          <StatCard
-            label="Offene Zahlungen"
-            value={formatChf(Number(openPayments._sum.amountChf ?? 0))}
-            hint={`${openPayments._count} Rechnung(en)`}
-            icon="wallet"
-            href="/dashboard/zahlungen?status=PENDING"
-            tone={openPayments._count > 0 ? "warning" : "default"}
-          />
-        </StatGrid>
-      </section>
+      {showFinancials && openPayments ? (
+        <section className="mb-8" aria-label="Abonnemente und Zahlungen">
+          <StatGrid>
+            <StatCard
+              label="Kommende Veranstaltungen"
+              value={upcomingEvents}
+              icon="calendar"
+              href="/dashboard/agenda"
+            />
+            <StatCard
+              label="Aktive Abonnemente"
+              value={activeSubscriptions}
+              icon="badge"
+              href="/dashboard/abonnemente"
+            />
+            <StatCard
+              label="Laufen bald ab"
+              value={expiringSubscriptions}
+              hint={`in den nächsten ${SUBSCRIPTION_EXPIRY_WARNING_DAYS} Tagen`}
+              icon="badge"
+              href="/dashboard/abonnemente?filter=expiring"
+              tone={expiringSubscriptions > 0 ? "warning" : "default"}
+            />
+            <StatCard
+              label="Offene Zahlungen"
+              value={formatChf(Number(openPayments._sum.amountChf ?? 0))}
+              hint={`${openPayments._count} Rechnung(en)`}
+              icon="wallet"
+              href="/dashboard/zahlungen?status=PENDING"
+              tone={openPayments._count > 0 ? "warning" : "default"}
+            />
+          </StatGrid>
+        </section>
+      ) : null}
 
       {draftOrganizations > 0 ? (
         <Card className="mb-8 border-amber-200 bg-amber-50 p-5">

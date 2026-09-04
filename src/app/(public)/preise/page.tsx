@@ -53,13 +53,13 @@ export default async function PricingPage() {
     <>
       <div className="border-b border-border bg-hero text-white">
         <div className="container py-14 text-center sm:py-20">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-accent-400">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-brand-accent">
             Für Organisationen
           </p>
           <h1 className="mx-auto max-w-3xl font-display text-3xl font-bold text-white sm:text-4xl lg:text-5xl">
             {settingString(settings, "pricing_title", "Deine Fasnacht. Deine Gugge. Deine Seite.")}
           </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-[15px] leading-relaxed text-slate-300">
+          <p className="mx-auto mt-5 max-w-2xl text-[15px] leading-relaxed text-white/75">
             {settingString(
               settings,
               "pricing_subtitle",

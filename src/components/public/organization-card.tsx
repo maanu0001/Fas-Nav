@@ -57,7 +57,7 @@ export function OrganizationCard({
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
         />
         {org.isFeatured ? (
-          <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-accent-500 px-2.5 py-1 text-xs font-semibold text-white shadow-subtle">
+          <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-accent px-2.5 py-1 text-xs font-semibold text-accent-foreground shadow-subtle">
             <Sparkles className="h-3 w-3" aria-hidden />
             Empfohlen
           </span>

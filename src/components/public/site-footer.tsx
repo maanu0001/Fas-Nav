@@ -43,7 +43,7 @@ export function SiteFooter() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="mt-20 border-t border-border bg-primary-950 text-slate-300">
+    <footer className="mt-20 border-t border-border bg-brand-strong text-white/75">
       <div className="container py-14">
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-2">
@@ -53,10 +53,10 @@ export function SiteFooter() {
                 Fas-Nav<span className="text-white/50">.ch</span>
               </span>
             </div>
-            <p className="mt-4 max-w-sm text-sm leading-relaxed text-slate-400">
+            <p className="mt-4 max-w-sm text-sm leading-relaxed text-white/60">
               {SITE.description}
             </p>
-            <p className="mt-5 text-xs text-slate-500">
+            <p className="mt-5 text-xs text-white/50">
               Ein Schweizer Projekt für die Fasnachtsszene – von der Vorfasnacht bis zum
               Abschluss.
             </p>
@@ -72,7 +72,7 @@ export function SiteFooter() {
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="text-sm text-slate-400 transition-colors hover:text-white"
+                      className="text-sm text-white/60 transition-colors hover:text-white"
                     >
                       {link.label}
                     </Link>
@@ -92,7 +92,7 @@ export function SiteFooter() {
               <li key={canton.code}>
                 <Link
                   href={`/kanton/${canton.slug}`}
-                  className="text-sm text-slate-400 transition-colors hover:text-white"
+                  className="text-sm text-white/60 transition-colors hover:text-white"
                 >
                   Fasnacht {canton.name}
                 </Link>
@@ -101,7 +101,7 @@ export function SiteFooter() {
             <li>
               <Link
                 href="/kantone"
-                className="text-sm font-medium text-accent-400 transition-colors hover:text-accent-300"
+                className="text-sm font-medium text-brand-accent transition-colors hover:text-brand-accent/80"
               >
                 Alle Kantone →
               </Link>
@@ -109,7 +109,7 @@ export function SiteFooter() {
           </ul>
         </div>
 
-        <div className="mt-10 flex flex-col gap-3 border-t border-white/10 pt-7 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-10 flex flex-col gap-3 border-t border-white/10 pt-7 text-xs text-white/50 sm:flex-row sm:items-center sm:justify-between">
           <p>
             © {year} {SITE.name} · Alle Rechte vorbehalten.
           </p>

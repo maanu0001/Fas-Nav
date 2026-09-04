@@ -34,7 +34,11 @@ export const PERMISSIONS = {
   manageOrganizations: (role: Role) => isStaff(role),
   manageAllEvents: (role: Role) => isStaff(role),
   manageSubscriptions: (role: Role) => isStaff(role),
-  managePayments: (role: Role) => isStaff(role),
+  /**
+   * Zahlungen sind eine kaufmännische Funktion und bleiben der
+   * Administration vorbehalten. Deckt Seite, API und Kennzahlen gemeinsam ab.
+   */
+  managePayments: (role: Role) => isAdmin(role),
   managePlans: (role: Role) => isAdmin(role),
   /** Die Startseite gestaltet ausschliesslich die Administration. */
   manageHomepage: (role: Role) => isAdmin(role),
@@ -44,6 +48,10 @@ export const PERMISSIONS = {
   viewAuditLog: (role: Role) => isStaff(role),
   viewPlatformStats: (role: Role) => isStaff(role),
   verifyOrganizations: (role: Role) => isStaff(role),
+  /** Umsatz- und Abonnementzahlen in Übersichten und Statistik. */
+  viewFinancialFigures: (role: Role) => isAdmin(role),
+  /** Datenqualitäts-Center: Vollständigkeit und mögliche Dubletten prüfen. */
+  reviewDataQuality: (role: Role) => isAdmin(role),
   /**
    * Recherchedateien analysieren, importieren und rückgängig machen.
    * Ein Import verändert den öffentlichen Datenbestand in grossem Umfang und

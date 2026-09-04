@@ -27,7 +27,7 @@ export default async function CantonsPage() {
     <>
       <div className="border-b border-border bg-muted/40">
         <div className="container py-10 sm:py-14">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-accent-600">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-accent-700">
             Übersicht
           </p>
           <h1 className="font-display text-3xl font-bold sm:text-4xl">Fasnacht nach Kanton</h1>

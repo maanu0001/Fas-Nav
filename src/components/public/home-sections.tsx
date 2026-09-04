@@ -85,7 +85,7 @@ export function HeroSection({
           </h1>
 
           {section.subtitle ? (
-            <p className="mt-6 max-w-2xl text-lg leading-relaxed text-slate-200">
+            <p className="mt-6 max-w-2xl text-lg leading-relaxed text-white/85">
               {section.subtitle}
             </p>
           ) : null}
@@ -101,7 +101,7 @@ export function HeroSection({
             { label: "Kantone", value: counts.cantons },
           ].map((stat) => (
             <div key={stat.label}>
-              <dt className="text-xs font-medium uppercase tracking-wider text-slate-400">
+              <dt className="text-xs font-medium uppercase tracking-wider text-white/60">
                 {stat.label}
               </dt>
               <dd className="mt-1 font-display text-3xl font-bold text-white">{stat.value}</dd>
@@ -265,11 +265,11 @@ export function OrganisationCtaSection({
 
   return (
     <div className="container py-16 sm:py-20">
-      <div className="overflow-hidden rounded-2xl border border-border bg-primary-950 text-white shadow-lift">
+      <div className="overflow-hidden rounded-2xl border border-border bg-brand-strong text-white shadow-lift">
         <div className="grid gap-10 p-8 sm:p-12 lg:grid-cols-2 lg:gap-16">
           <div>
             {section.eyebrow ? (
-              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-accent-400">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-brand-accent">
                 {section.eyebrow}
               </p>
             ) : null}
@@ -277,21 +277,21 @@ export function OrganisationCtaSection({
               {section.title ?? "Deine Fasnacht. Deine Gugge. Deine Seite."}
             </h2>
             {section.subtitle ? (
-              <p className="mt-5 text-[15px] leading-relaxed text-slate-300">{section.subtitle}</p>
+              <p className="mt-5 text-[15px] leading-relaxed text-white/75">{section.subtitle}</p>
             ) : null}
             <Buttons buttons={section.data.buttons} inverse />
-            <p className="mt-5 text-sm text-slate-400">{priceLabel}</p>
+            <p className="mt-5 text-sm text-white/60">{priceLabel}</p>
           </div>
 
           {items.length ? (
             <ul className="grid gap-3 self-center">
               {items.map((item) => (
                 <li key={item.title} className="flex gap-3 rounded-lg bg-white/5 p-3.5">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-accent-400" aria-hidden />
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-brand-accent" aria-hidden />
                   <div>
                     <p className="text-sm font-semibold text-white">{item.title}</p>
                     {item.body ? (
-                      <p className="mt-0.5 text-sm text-slate-400">{item.body}</p>
+                      <p className="mt-0.5 text-sm text-white/60">{item.body}</p>
                     ) : null}
                   </div>
                 </li>

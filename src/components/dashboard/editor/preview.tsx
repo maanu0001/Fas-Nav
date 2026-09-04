@@ -27,7 +27,7 @@ export function OrganizationPreview({
   const activeSocials = state.socialLinks.filter((link) => link.url.trim());
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-white">
+    <div className="overflow-hidden rounded-xl border border-border bg-card">
       <div className="relative h-32 bg-gradient-to-br from-primary-100 to-secondary sm:h-40">
         {state.header?.url ? (
           <Image src={state.header.url} alt="" fill sizes="600px" className="object-cover" />
@@ -36,12 +36,12 @@ export function OrganizationPreview({
             Titelbild
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-primary-950/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-brand-strong/60 to-transparent" />
       </div>
 
       <div className="p-4">
         <div className="-mt-10 flex items-end gap-3">
-          <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border-2 border-white bg-white shadow-subtle">
+          <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border-2 border-card bg-card shadow-subtle">
             {state.logo?.url ? (
               <Image src={state.logo.url} alt="" fill sizes="56px" className="object-contain p-1" />
             ) : (

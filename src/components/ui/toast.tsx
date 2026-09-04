@@ -23,9 +23,9 @@ export function useToast(): ToastContextValue {
 const icons = { success: CheckCircle2, error: TriangleAlert, info: Info } as const;
 
 const styles: Record<ToastVariant, string> = {
-  success: "border-emerald-200 bg-white text-emerald-900",
-  error: "border-red-200 bg-white text-red-900",
-  info: "border-border bg-white text-foreground",
+  success: "border-emerald-200 bg-card text-emerald-900",
+  error: "border-red-200 bg-card text-red-900",
+  info: "border-border bg-card text-foreground",
 };
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {

@@ -80,7 +80,7 @@ export function LogoImage({
           // "relative" wie im Zweig mit Bild: Das Kürzel liegt auf Karten
           // bewusst über dem Kopfbereich. Ohne eigene Positionierung würde es
           // vom dortigen Platzhalter verdeckt.
-          "relative flex shrink-0 items-center justify-center rounded-xl border border-border bg-white font-display font-bold text-primary-700",
+          "relative flex shrink-0 items-center justify-center rounded-xl border border-border bg-card font-display font-bold text-primary-700",
           className,
         )}
         style={{ width: size, height: size, fontSize: Math.round(size * 0.34) }}
@@ -94,7 +94,7 @@ export function LogoImage({
   return (
     <div
       className={cn(
-        "relative shrink-0 overflow-hidden rounded-xl border border-border bg-white",
+        "relative shrink-0 overflow-hidden rounded-xl border border-border bg-card",
         className,
       )}
       style={{ width: size, height: size }}

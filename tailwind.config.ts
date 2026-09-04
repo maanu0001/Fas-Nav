@@ -2,9 +2,32 @@ import type { Config } from "tailwindcss";
 
 /**
  * Fas-Nav.ch Design-System
- * Farbwelt: tiefes Nachtblau (Seriosität, Schweizer Zurückhaltung) mit
- * einem warmen Fasnachts-Akzent. Bewusst reduziert, nicht plakativ.
+ *
+ * Sämtliche Farbwerte stehen als CSS-Variablen in src/app/globals.css und
+ * werden hier nur noch verknüpft. Dadurch gilt jede Farbe an genau einer
+ * Stelle und der dunkle Modus entsteht durch andere Variablenwerte statt
+ * durch zusätzliche Klassen in den Komponenten.
+ *
+ * Die neutralen Stufen sind auch unter dem Namen "slate" erreichbar: Die
+ * Anwendung nutzt diese Schreibweise an vielen Stellen für Fliesstext, und so
+ * folgt sie automatisch dem Thema, statt in einem festen Grau zu verharren.
  */
+const withOpacity = (variable: string) => `hsl(var(${variable}) / <alpha-value>)`;
+
+const neutral = {
+  50: withOpacity("--neutral-50"),
+  100: withOpacity("--neutral-100"),
+  200: withOpacity("--neutral-200"),
+  300: withOpacity("--neutral-300"),
+  400: withOpacity("--neutral-400"),
+  500: withOpacity("--neutral-500"),
+  600: withOpacity("--neutral-600"),
+  700: withOpacity("--neutral-700"),
+  800: withOpacity("--neutral-800"),
+  900: withOpacity("--neutral-900"),
+  950: withOpacity("--neutral-950"),
+};
+
 const config: Config = {
   darkMode: ["class"],
   content: ["./src/**/*.{ts,tsx}"],
@@ -16,67 +39,142 @@ const config: Config = {
     },
     extend: {
       colors: {
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
+        border: withOpacity("--border"),
+        input: withOpacity("--input"),
+        ring: withOpacity("--ring"),
+        background: withOpacity("--background"),
+        foreground: withOpacity("--foreground"),
+
+        surface: {
+          DEFAULT: withOpacity("--surface"),
+          secondary: withOpacity("--surface-secondary"),
+        },
+
+        /** Bewusst dunkle Markenflächen – in beiden Modi dunkel. */
+        brand: {
+          DEFAULT: withOpacity("--brand-surface"),
+          strong: withOpacity("--brand-surface-strong"),
+          foreground: withOpacity("--brand-surface-foreground"),
+          accent: withOpacity("--brand-accent"),
+        },
+
         primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
-          50: "hsl(215 60% 97%)",
-          100: "hsl(215 55% 93%)",
-          200: "hsl(215 50% 85%)",
-          300: "hsl(215 45% 72%)",
-          400: "hsl(215 42% 55%)",
-          500: "hsl(215 48% 40%)",
-          600: "hsl(216 55% 31%)",
-          700: "hsl(217 60% 24%)",
-          800: "hsl(218 62% 18%)",
-          900: "hsl(219 65% 13%)",
-          950: "hsl(220 70% 8%)",
+          DEFAULT: withOpacity("--primary"),
+          foreground: withOpacity("--primary-foreground"),
+          50: withOpacity("--primary-50"),
+          100: withOpacity("--primary-100"),
+          200: withOpacity("--primary-200"),
+          300: withOpacity("--primary-300"),
+          400: withOpacity("--primary-400"),
+          500: withOpacity("--primary-500"),
+          600: withOpacity("--primary-600"),
+          700: withOpacity("--primary-700"),
+          800: withOpacity("--primary-800"),
+          900: withOpacity("--primary-900"),
+          950: withOpacity("--primary-950"),
         },
         accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
-          50: "hsl(20 100% 97%)",
-          100: "hsl(20 96% 92%)",
-          200: "hsl(19 95% 84%)",
-          300: "hsl(18 94% 73%)",
-          400: "hsl(16 92% 62%)",
-          500: "hsl(14 88% 52%)",
-          600: "hsl(12 84% 45%)",
-          700: "hsl(11 80% 37%)",
-          800: "hsl(10 74% 31%)",
-          900: "hsl(10 70% 26%)",
+          DEFAULT: withOpacity("--accent"),
+          foreground: withOpacity("--accent-foreground"),
+          50: withOpacity("--accent-50"),
+          100: withOpacity("--accent-100"),
+          200: withOpacity("--accent-200"),
+          300: withOpacity("--accent-300"),
+          400: withOpacity("--accent-400"),
+          500: withOpacity("--accent-500"),
+          600: withOpacity("--accent-600"),
+          700: withOpacity("--accent-700"),
+          800: withOpacity("--accent-800"),
+          900: withOpacity("--accent-900"),
         },
+        gold: {
+          50: withOpacity("--gold-50"),
+          100: withOpacity("--gold-100"),
+          200: withOpacity("--gold-200"),
+          300: withOpacity("--gold-300"),
+          400: withOpacity("--gold-400"),
+          500: withOpacity("--gold-500"),
+          600: withOpacity("--gold-600"),
+          700: withOpacity("--gold-700"),
+          800: withOpacity("--gold-800"),
+          900: withOpacity("--gold-900"),
+        },
+
         secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
+          DEFAULT: withOpacity("--secondary"),
+          foreground: withOpacity("--secondary-foreground"),
         },
         muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
+          DEFAULT: withOpacity("--muted"),
+          foreground: withOpacity("--muted-foreground"),
         },
         card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
+          DEFAULT: withOpacity("--card"),
+          foreground: withOpacity("--card-foreground"),
         },
         popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
+          DEFAULT: withOpacity("--popover"),
+          foreground: withOpacity("--popover-foreground"),
         },
         destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
+          DEFAULT: withOpacity("--destructive"),
+          foreground: withOpacity("--destructive-foreground"),
         },
         success: {
-          DEFAULT: "hsl(var(--success))",
-          foreground: "hsl(var(--success-foreground))",
+          DEFAULT: withOpacity("--success"),
+          foreground: withOpacity("--success-foreground"),
         },
         warning: {
-          DEFAULT: "hsl(var(--warning))",
-          foreground: "hsl(var(--warning-foreground))",
+          DEFAULT: withOpacity("--warning"),
+          foreground: withOpacity("--warning-foreground"),
+        },
+        info: {
+          DEFAULT: withOpacity("--info"),
+          foreground: withOpacity("--info-foreground"),
+        },
+
+        // Neutrale Stufen, zusätzlich unter dem in der Anwendung verbreiteten
+        // Namen "slate" erreichbar.
+        neutral,
+        slate: neutral,
+
+        // Statusfarben als Skala, damit vorhandene Klassen wie
+        // "bg-emerald-100" oder "text-red-700" dem Thema folgen.
+        red: {
+          100: withOpacity("--danger-100"),
+          200: withOpacity("--danger-100"),
+          500: withOpacity("--danger-500"),
+          600: withOpacity("--danger-500"),
+          700: withOpacity("--danger-700"),
+          800: withOpacity("--danger-800"),
+          900: withOpacity("--danger-800"),
+        },
+        emerald: {
+          100: withOpacity("--positive-100"),
+          200: withOpacity("--positive-100"),
+          500: withOpacity("--positive-500"),
+          600: withOpacity("--positive-500"),
+          700: withOpacity("--positive-700"),
+          800: withOpacity("--positive-800"),
+          900: withOpacity("--positive-800"),
+        },
+        amber: {
+          50: withOpacity("--gold-50"),
+          100: withOpacity("--gold-100"),
+          200: withOpacity("--gold-200"),
+          300: withOpacity("--gold-300"),
+          400: withOpacity("--gold-400"),
+          500: withOpacity("--gold-500"),
+          600: withOpacity("--gold-600"),
+          700: withOpacity("--gold-700"),
+          800: withOpacity("--gold-800"),
+          900: withOpacity("--gold-900"),
+        },
+        sky: {
+          100: withOpacity("--sky-100"),
+          500: withOpacity("--sky-500"),
+          700: withOpacity("--sky-700"),
+          900: withOpacity("--sky-900"),
         },
       },
       borderRadius: {
@@ -89,9 +187,10 @@ const config: Config = {
         display: ["var(--font-display)", "var(--font-sans)", "system-ui", "sans-serif"],
       },
       boxShadow: {
-        subtle: "0 1px 2px 0 rgb(15 23 42 / 0.04), 0 1px 3px 0 rgb(15 23 42 / 0.06)",
-        card: "0 2px 4px -2px rgb(15 23 42 / 0.06), 0 8px 20px -8px rgb(15 23 42 / 0.12)",
-        lift: "0 8px 16px -8px rgb(15 23 42 / 0.14), 0 20px 40px -16px rgb(15 23 42 / 0.18)",
+        subtle:
+          "0 1px 2px 0 hsl(var(--shadow-color) / var(--shadow-opacity-subtle)), 0 1px 3px 0 hsl(var(--shadow-color) / var(--shadow-opacity-subtle))",
+        card: "0 2px 4px -2px hsl(var(--shadow-color) / var(--shadow-opacity-subtle)), 0 8px 20px -8px hsl(var(--shadow-color) / var(--shadow-opacity-card))",
+        lift: "0 8px 16px -8px hsl(var(--shadow-color) / var(--shadow-opacity-card)), 0 20px 40px -16px hsl(var(--shadow-color) / var(--shadow-opacity-card))",
       },
       keyframes: {
         "accordion-down": {

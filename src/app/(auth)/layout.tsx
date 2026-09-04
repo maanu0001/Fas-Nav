@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
@@ -41,12 +42,35 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <aside className="relative hidden overflow-hidden bg-hero lg:block" aria-hidden>
         <div className="absolute inset-0 bg-grid opacity-40" />
         <div className="absolute inset-0 bg-confetti opacity-70" />
-        <div className="relative flex h-full flex-col justify-end p-12 text-white">
+        <div className="relative flex h-full flex-col justify-between p-12 text-white">
+          {/*
+            Vollständiges Logo auf der Markenfläche. Die transparente Fassung
+            verhindert einen weissen Kasten auf dem dunklen Verlauf,
+            "object-contain" erhält das Seitenverhältnis.
+          */}
+          <div className="flex flex-1 items-center justify-center">
+            {/*
+              Das Logo ist für hellen Grund gezeichnet: Seine Navy-Buchstaben
+              verlieren auf der dunklen Markenfläche an Kontrast. Es steht
+              deshalb auf einer ruhigen hellen Trägerfläche, statt das Logo
+              selbst umzufärben.
+            */}
+            <div className="rounded-[2rem] bg-white/95 p-8 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.6)] ring-1 ring-white/25">
+              <Image
+                src="/brand/fas-nav-logo-transparent.png"
+                alt=""
+                width={420}
+                height={420}
+                priority
+                className="h-auto w-full max-w-[19rem] object-contain"
+              />
+            </div>
+          </div>
           <blockquote className="max-w-md">
             <p className="font-display text-3xl font-bold leading-snug">
               Die Schweizer Fasnacht auf einen Blick.
             </p>
-            <footer className="mt-5 text-sm leading-relaxed text-slate-300">
+            <footer className="mt-5 text-sm leading-relaxed text-white/75">
               Verwalte deine Fasnacht oder Gugge, veröffentliche Veranstaltungen und erreiche
               Fasnachtsbegeisterte in der ganzen Schweiz.
             </footer>

@@ -113,7 +113,7 @@ export function EventCalendar({
                   className={cn(
                     "inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium",
                     isToday(day)
-                      ? "bg-accent-500 font-bold text-white"
+                      ? "bg-accent font-bold text-accent-foreground"
                       : outside
                         ? "text-muted-foreground/60"
                         : "text-slate-700",
@@ -132,7 +132,7 @@ export function EventCalendar({
                     className="block truncate rounded bg-primary-50 px-1.5 py-1 text-[0.68rem] font-medium leading-tight text-primary-800 transition-colors hover:bg-primary-100"
                   >
                     {!event.allDay && isSameDay(new Date(event.startDate), day) ? (
-                      <span className="mr-1 font-semibold text-accent-600">
+                      <span className="mr-1 font-semibold text-accent-700">
                         {formatTime(event.startDate)}
                       </span>
                     ) : null}

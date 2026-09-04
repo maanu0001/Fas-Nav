@@ -15,7 +15,8 @@ import { prisma } from "@/lib/prisma";
 
 import { daysUntilExpiry } from "@/lib/subscription";
 import { formatChf } from "@/lib/utils";
-import type { Prisma } from "@prisma/client";
+import { can } from "@/lib/rbac";
+import type { Prisma, Role } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +25,10 @@ export const metadata: Metadata = { title: "Abonnemente" };
 type SearchParams = Promise<Record<string, string | undefined>>;
 
 export default async function SubscriptionsPage({ searchParams }: { searchParams: SearchParams }) {
-  await requirePermissionPage("manageSubscriptions");
+  const context = await requirePermissionPage("manageSubscriptions");
+  // Das Jahresvolumen ist eine kaufmännische Kennzahl. Es bliebe wirkungslos,
+  // sie im Dashboard auszublenden und hier einen Klick weiter zu zeigen.
+  const showRevenue = can(context.user.role as Role, "viewFinancialFigures");
   const params = await searchParams;
 
   const today = startOfToday();
@@ -91,11 +95,13 @@ export default async function SubscriptionsPage({ searchParams }: { searchParams
           icon="wallet"
           tone={countBy("PAYMENT_PENDING") > 0 ? "warning" : "default"}
         />
-        <StatCard
-          label="Jahresvolumen aktiv"
-          value={formatChf(Number(revenue._sum.priceChf ?? 0))}
-          icon="chart"
-        />
+        {showRevenue ? (
+          <StatCard
+            label="Jahresvolumen aktiv"
+            value={formatChf(Number(revenue._sum.priceChf ?? 0))}
+            icon="chart"
+          />
+        ) : null}
       </StatGrid>
 
       <div className="mt-6">

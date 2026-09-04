@@ -7,6 +7,7 @@ import { LayoutDashboard, Menu, Search, X } from "lucide-react";
 
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Logo } from "@/components/ui/logo";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -78,6 +79,8 @@ export function SiteHeader({ isAuthenticated }: { isAuthenticated: boolean }) {
             />
           </form>
 
+          <ThemeToggle className="hidden sm:inline-flex" />
+
           {isAuthenticated ? (
             <ButtonLink href="/dashboard" variant="primary" size="md" className="hidden sm:inline-flex">
               <LayoutDashboard />
@@ -139,6 +142,11 @@ export function SiteHeader({ isAuthenticated }: { isAuthenticated: boolean }) {
             >
               {isAuthenticated ? "Zum Dashboard" : "Anmelden"}
             </ButtonLink>
+
+            <div className="flex items-center justify-between gap-3 border-t border-border pt-4">
+              <span className="text-sm text-muted-foreground">Farbschema</span>
+              <ThemeToggle />
+            </div>
           </div>
         </div>
       ) : null}

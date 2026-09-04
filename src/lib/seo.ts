@@ -25,7 +25,7 @@ export function buildMetadata({
 }: SeoInput): Metadata {
   const url = absoluteUrl(path);
   const desc = truncate(description?.trim() || SITE.description, 180);
-  const ogImage = image ? (image.startsWith("http") ? image : absoluteUrl(image)) : absoluteUrl("/og-default.svg");
+  const ogImage = image ? (image.startsWith("http") ? image : absoluteUrl(image)) : absoluteUrl("/brand/og-default.png");
 
   return {
     title,

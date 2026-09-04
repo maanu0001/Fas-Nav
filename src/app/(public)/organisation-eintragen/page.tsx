@@ -78,13 +78,13 @@ export default async function RegisterOrganizationPage({
     <>
       <div className="border-b border-border bg-hero text-white">
         <div className="container py-14 sm:py-20">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-accent-400">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-brand-accent">
             Für Fasnachten und Guggen
           </p>
           <h1 className="max-w-3xl font-display text-3xl font-bold text-white sm:text-4xl lg:text-5xl">
             Deine Fasnacht. Deine Gugge. Deine Seite.
           </h1>
-          <p className="mt-5 max-w-2xl text-[15px] leading-relaxed text-slate-300">
+          <p className="mt-5 max-w-2xl text-[15px] leading-relaxed text-white/75">
             Präsentiere deine Organisation auf Fas-Nav.ch und erreiche Fasnachtsbegeisterte in der
             ganzen Schweiz.
           </p>

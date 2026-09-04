@@ -90,7 +90,7 @@ export function OrganizationProfile({
   return (
     <article>
       {/* Titelbild */}
-      <div className="relative h-52 w-full overflow-hidden bg-primary-900 sm:h-72 lg:h-80">
+      <div className="relative h-52 w-full overflow-hidden bg-brand sm:h-72 lg:h-80">
         <MediaImage
           media={org.header}
           alt={`${org.name} – Titelbild`}
@@ -98,7 +98,7 @@ export function OrganizationProfile({
           priority
           className="opacity-95"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-primary-950/80 via-primary-950/25 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-brand-strong/80 via-brand-strong/25 to-transparent" />
       </div>
 
       <div className="container">
@@ -285,7 +285,7 @@ export function OrganizationProfile({
                         className="object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                       {image.caption ? (
-                        <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-primary-950/85 to-transparent p-2.5 text-xs text-white">
+                        <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-brand-strong/85 to-transparent p-2.5 text-xs text-white">
                           {image.caption}
                         </figcaption>
                       ) : null}

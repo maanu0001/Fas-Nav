@@ -38,7 +38,10 @@ export function dashboardNavigation(role: Role): NavGroup[] {
           { href: "/dashboard/agenda", label: "Agenda", icon: "calendar" },
           { href: "/dashboard/medien", label: "Medien", icon: "image" },
           ...(isAdmin(role)
-            ? [{ href: "/dashboard/import", label: "Datenimport", icon: "upload" }]
+            ? [
+                { href: "/dashboard/import", label: "Datenimport", icon: "upload" },
+                { href: "/dashboard/datenqualitaet", label: "Datenqualität", icon: "chart" },
+              ]
             : []),
         ],
       },
@@ -47,7 +50,10 @@ export function dashboardNavigation(role: Role): NavGroup[] {
         items: [
           { href: "/dashboard/accounts", label: "Accounts", icon: "users" },
           { href: "/dashboard/abonnemente", label: "Abonnemente", icon: "badge" },
-          { href: "/dashboard/zahlungen", label: "Zahlungen", icon: "wallet" },
+          // Zahlungen sind eine kaufmännische Funktion und nur für ADMIN.
+          ...(isAdmin(role)
+            ? [{ href: "/dashboard/zahlungen", label: "Zahlungen", icon: "wallet" }]
+            : []),
           { href: "/dashboard/tickets", label: "Tickets", icon: "ticket" },
           { href: "/dashboard/werbung", label: "Werbung", icon: "megaphone" },
         ],

@@ -32,12 +32,12 @@ export function DateTile({ date, className }: { date: Date; className?: string }
   return (
     <div
       className={cn(
-        "flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-lg border border-border bg-white text-center leading-none shadow-subtle",
+        "flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-lg border border-border bg-card text-center leading-none shadow-subtle",
         className,
       )}
       aria-hidden
     >
-      <span className="text-[0.62rem] font-semibold uppercase tracking-wide text-accent-600">
+      <span className="text-[0.62rem] font-semibold uppercase tracking-wide text-accent-700">
         {formatDate(date, "MMM")}
       </span>
       <span className="mt-0.5 font-display text-lg font-bold text-primary-900">

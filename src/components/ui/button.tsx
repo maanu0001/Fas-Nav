@@ -21,7 +21,7 @@ const buttonVariants = cva(
         destructive:
           "bg-destructive text-destructive-foreground shadow-subtle hover:bg-destructive/90",
         link: "text-primary underline-offset-4 hover:underline",
-        inverse: "bg-white text-primary-900 shadow-subtle hover:bg-primary-50",
+        inverse: "bg-white text-brand shadow-subtle hover:bg-white/90",
         inverseOutline:
           "border border-white/35 bg-white/5 text-white backdrop-blur hover:bg-white/15",
       },

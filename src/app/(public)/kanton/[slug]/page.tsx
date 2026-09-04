@@ -118,7 +118,7 @@ export default async function CantonPage({ params }: Props) {
           <h1 className="font-display text-3xl font-bold text-white sm:text-4xl lg:text-5xl">
             Fasnacht im Kanton {canton.name}
           </h1>
-          <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-slate-300">
+          <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-white/75">
             {canton.description ||
               `Fasnachten, Guggenmusiken und Veranstaltungen im Kanton ${canton.name} (${canton.code}) – von der Vorfasnacht bis zum Abschluss.`}
           </p>
@@ -130,7 +130,7 @@ export default async function CantonPage({ params }: Props) {
               { label: "Kommende Termine", value: events.length, icon: CalendarDays },
             ].map((stat) => (
               <div key={stat.label}>
-                <dt className="flex items-center gap-1.5 text-xs uppercase tracking-wider text-slate-400">
+                <dt className="flex items-center gap-1.5 text-xs uppercase tracking-wider text-white/60">
                   <stat.icon className="h-3.5 w-3.5" aria-hidden />
                   {stat.label}
                 </dt>

@@ -214,7 +214,7 @@ export function OrganizationAdminPanel({
               onChange={(e) => setAdminState((s) => ({ ...s, isFeatured: e.target.checked }))}
             />
             <span className="flex items-center gap-1.5 text-slate-700">
-              <Sparkles className="h-3.5 w-3.5 text-accent-600" aria-hidden />
+              <Sparkles className="h-3.5 w-3.5 text-accent-700" aria-hidden />
               Hervorgehoben darstellen
             </span>
           </label>

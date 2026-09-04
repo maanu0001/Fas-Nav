@@ -1,3 +1,4 @@
+import * as React from "react";
 import Link from "next/link";
 
 import { NavIcon } from "@/components/dashboard/nav-icon";
@@ -57,6 +58,28 @@ export function StatCard({
   );
 }
 
+/**
+ * Kachelraster, das sich der Anzahl Kacheln anpasst.
+ *
+ * Die Spaltenzahl folgt der Anzahl Kacheln, damit keine einzelne Kachel in
+ * einer eigenen Reihe zurückbleibt, wenn eine Rolle einzelne Kacheln nicht
+ * sehen darf. Bis zu fünf Kacheln stehen in einer Reihe, darüber wird auf
+ * vier Spalten umgebrochen. Die Klassennamen stehen ausgeschrieben, weil
+ * Tailwind nur vollständig im Quelltext vorkommende Klassen erzeugt.
+ */
+const COLUMNS: Record<number, string> = {
+  1: "lg:grid-cols-1",
+  2: "lg:grid-cols-2",
+  3: "lg:grid-cols-3",
+  4: "lg:grid-cols-4",
+  5: "lg:grid-cols-5",
+};
+
 export function StatGrid({ children }: { children: React.ReactNode }) {
-  return <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{children}</div>;
+  const count = React.Children.toArray(children).filter(Boolean).length;
+  const columns = COLUMNS[count] ?? "lg:grid-cols-4";
+
+  return (
+    <div className={cn("grid gap-4 sm:grid-cols-2 md:grid-cols-3", columns)}>{children}</div>
+  );
 }

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Manrope } from "next/font/google";
 
 import { ToastProvider } from "@/components/ui/toast";
+import { ThemeProvider } from "@/components/theme/theme-provider";
 import { SITE } from "@/lib/constants";
 import { absoluteUrl } from "@/lib/utils";
 
@@ -33,20 +34,35 @@ export const metadata: Metadata = {
   publisher: SITE.name,
   formatDetection: { telephone: false },
   icons: {
-    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
-    apple: [{ url: "/icon.svg" }],
+    // Das Signet ist als SVG hinterlegt, damit es in jeder Grösse scharf
+    // bleibt; die PNG-Fassungen bedienen Browser und Systeme ohne SVG-Icons.
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/brand/icon-192.png", type: "image/png", sizes: "192x192" },
+      { url: "/brand/icon-512.png", type: "image/png", sizes: "512x512" },
+    ],
+    apple: [{ url: "/apple-icon.png", sizes: "180x180" }],
   },
+  manifest: "/site.webmanifest",
 };
 
 export const viewport: Viewport = {
-  themeColor: "#12203a",
+  // Farbe der Browserleiste je Modus – Navy des Logos beziehungsweise der
+  // dunkle Grundton der Anwendung.
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#0b1a30" },
+    { media: "(prefers-color-scheme: dark)", color: "#070f1c" },
+  ],
   width: "device-width",
   initialScale: 1,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="de-CH" className={`${sans.variable} ${display.variable}`}>
+    // suppressHydrationWarning: next-themes ergänzt die Klasse am
+    // <html>-Element vor der Hydration; ohne diesen Hinweis meldet React die
+    // Abweichung zum Serverergebnis.
+    <html lang="de-CH" className={`${sans.variable} ${display.variable}`} suppressHydrationWarning>
       <body className="min-h-dvh font-sans">
         <a
           href="#inhalt"
@@ -54,7 +70,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         >
           Zum Inhalt springen
         </a>
-        <ToastProvider>{children}</ToastProvider>
+        <ThemeProvider>
+          <ToastProvider>{children}</ToastProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

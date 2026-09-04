@@ -92,7 +92,7 @@ export function OrganizationSwitcher({
 
   return (
     <div ref={containerRef} className="relative mx-3 mt-4">
-      <p className="mb-1.5 px-1 text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-slate-400">
+      <p className="mb-1.5 px-1 text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-white/60">
         Aktive Organisation
       </p>
 
@@ -117,13 +117,13 @@ export function OrganizationSwitcher({
               <Badge variant={active.published ? "success" : "warning"}>
                 {active.statusLabel}
               </Badge>
-              <span className="text-[0.65rem] text-slate-400">
+              <span className="text-[0.65rem] text-white/60">
                 {MEMBERSHIP_ROLE_LABELS[active.membershipRole]}
               </span>
             </span>
           </span>
           {!single ? (
-            <ChevronsUpDown className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" aria-hidden />
+            <ChevronsUpDown className="mt-0.5 h-4 w-4 shrink-0 text-white/60" aria-hidden />
           ) : null}
         </span>
       </button>
@@ -132,7 +132,7 @@ export function OrganizationSwitcher({
         <ul
           role="listbox"
           aria-label="Organisation wechseln"
-          className="absolute inset-x-0 top-full z-50 mt-1 max-h-72 overflow-y-auto rounded-lg border border-white/10 bg-primary-900 p-1 shadow-lift"
+          className="absolute inset-x-0 top-full z-50 mt-1 max-h-72 overflow-y-auto rounded-lg border border-white/10 bg-brand p-1 shadow-lift"
         >
           {organizations.map((org) => {
             const isActive = org.id === activeId;
@@ -153,7 +153,7 @@ export function OrganizationSwitcher({
                     <span className="block truncate text-sm font-medium text-white">
                       {org.name}
                     </span>
-                    <span className="block text-[0.65rem] text-slate-400">
+                    <span className="block text-[0.65rem] text-white/60">
                       {org.type === "CARNIVAL" ? "Fasnacht" : "Gugge"} ·{" "}
                       {MEMBERSHIP_ROLE_LABELS[org.membershipRole]}
                     </span>
@@ -161,7 +161,7 @@ export function OrganizationSwitcher({
                   {pending === org.id ? (
                     <Spinner className="mt-0.5 h-3.5 w-3.5 text-white" />
                   ) : isActive ? (
-                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-accent-400" aria-hidden />
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-brand-accent" aria-hidden />
                   ) : null}
                 </button>
               </li>
@@ -174,7 +174,7 @@ export function OrganizationSwitcher({
         href={publicHref(active)}
         target="_blank"
         rel="noopener noreferrer"
-        className="mt-2 inline-flex items-center gap-1.5 px-1 text-xs font-medium text-slate-300 transition-colors hover:text-white"
+        className="mt-2 inline-flex items-center gap-1.5 px-1 text-xs font-medium text-white/75 transition-colors hover:text-white"
       >
         Vorschau öffnen
         <ExternalLink className="h-3 w-3" aria-hidden />

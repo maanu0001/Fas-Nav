@@ -40,7 +40,7 @@ export default async function ContactPage() {
           <aside className="space-y-4">
             <Card className="p-5">
               <h2 className="flex items-center gap-2 font-display text-base font-semibold">
-                <Mail className="h-4 w-4 text-accent-600" aria-hidden />
+                <Mail className="h-4 w-4 text-accent-700" aria-hidden />
                 E-Mail
               </h2>
               <a
@@ -53,7 +53,7 @@ export default async function ContactPage() {
 
             <Card className="p-5">
               <h2 className="flex items-center gap-2 font-display text-base font-semibold">
-                <MessageSquare className="h-4 w-4 text-accent-600" aria-hidden />
+                <MessageSquare className="h-4 w-4 text-accent-700" aria-hidden />
                 Du hast bereits ein Konto?
               </h2>
               <p className="mt-2 text-sm text-muted-foreground">
@@ -70,7 +70,7 @@ export default async function ContactPage() {
 
             <Card className="p-5">
               <h2 className="flex items-center gap-2 font-display text-base font-semibold">
-                <Building2 className="h-4 w-4 text-accent-600" aria-hidden />
+                <Building2 className="h-4 w-4 text-accent-700" aria-hidden />
                 Betreiberin
               </h2>
               <p className="mt-2 text-sm text-muted-foreground">{operator}</p>

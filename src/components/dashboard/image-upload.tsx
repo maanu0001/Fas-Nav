@@ -92,7 +92,7 @@ export function ImageUpload({
               sizes="(max-width: 768px) 100vw, 400px"
               className={cn("object-cover", type === "LOGO" && "object-contain p-3")}
             />
-            <div className="absolute inset-x-0 bottom-0 flex justify-end gap-2 bg-gradient-to-t from-primary-950/80 to-transparent p-2.5">
+            <div className="absolute inset-x-0 bottom-0 flex justify-end gap-2 bg-gradient-to-t from-brand-strong/80 to-transparent p-2.5">
               <Button
                 variant="inverseOutline"
                 size="sm"

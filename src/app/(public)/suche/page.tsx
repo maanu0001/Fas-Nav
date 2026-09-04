@@ -49,7 +49,7 @@ function ResultGroup({
     <section className="mb-12">
       <div className="mb-5 flex items-center justify-between gap-4">
         <h2 className="flex items-center gap-2 font-display text-xl font-bold">
-          <Icon className="h-5 w-5 text-accent-600" aria-hidden />
+          <Icon className="h-5 w-5 text-accent-700" aria-hidden />
           {title}
           <span className="text-sm font-normal text-muted-foreground">({count})</span>
         </h2>

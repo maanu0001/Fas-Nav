@@ -201,6 +201,7 @@ npm run db:migrate   # Migration erzeugen (Entwicklung)
 npm run db:deploy    # Migrationen anwenden (Produktion)
 npm run db:seed      # Seed-Daten einspielen
 npm run db:studio    # Prisma Studio
+npm test             # Tests der Datenqualitäts-Bewertung
 ```
 
 ---
@@ -420,12 +421,61 @@ pseudonyme Besucherzählung werten diesen Header aus.
 | `FASNACHT` | Kontotyp Fasnacht – Zugriff nur über zugewiesene Organisationen |
 | `GUGGE` | Kontotyp Gugge – Zugriff nur über zugewiesene Organisationen |
 
-Die Startseite und der Datenimport verändern den öffentlichen Auftritt
-beziehungsweise den Datenbestand in grossem Umfang und sind deshalb allein
-`ADMIN` vorbehalten. Für ein `TEAM`-Konto fehlen die Menüpunkte nicht nur in
-der Navigation: Sowohl die Seiten `/dashboard/homepage` und `/dashboard/import`
-als auch die Endpunkte unter `/api/homepage` und `/api/import` prüfen die
-Berechtigungen `manageHomepage` und `importData` serverseitig.
+Diese Funktionen sind allein `ADMIN` vorbehalten:
+
+| Bereich | Berechtigung | Wirkt auf |
+| --- | --- | --- |
+| Startseite gestalten | `manageHomepage` | `/dashboard/homepage`, `/api/homepage/[key]` |
+| Datenimport | `importData` | `/dashboard/import`, `/api/import/*` |
+| Zahlungen | `managePayments` | `/dashboard/zahlungen`, `/api/payments/*` |
+| Umsatz- und Abonnementzahlen | `viewFinancialFigures` | Kacheln in Dashboard, Statistik und Abonnementübersicht |
+| Datenqualitäts-Center | `reviewDataQuality` | `/dashboard/datenqualitaet` |
+| Tarife und Einstellungen | `managePlans`, `manageSettings` | `/dashboard/einstellungen`, `/api/settings` |
+| Team- und Adminkonten | `manageStaffAccounts` | `/api/users` |
+
+Für ein `TEAM`-Konto fehlen die Menüpunkte nicht nur in der Navigation. Jede
+Seite und jeder Endpunkt prüft dieselbe Berechtigung serverseitig; ein direkter
+Aufruf endet auf `/dashboard/kein-zugriff` beziehungsweise mit HTTP 403.
+Kaufmännische Kennzahlen werden für Konten ohne `viewFinancialFigures` gar
+nicht erst aus der Datenbank gelesen und erreichen den Browser somit auch nicht
+im Seitenquelltext.
+
+### Datenqualitäts-Center
+
+`/dashboard/datenqualitaet` zeigt, welche Profile unvollständig, veraltet oder
+womöglich doppelt erfasst sind. Die Bewertung liegt vollständig in
+`src/lib/data-quality.ts`; Oberflächen lesen nur das Ergebnis.
+
+Der Wert von 0 bis 100 ist die Summe der Gewichte aller erfüllten Kriterien.
+Die Gewichte ergeben zusammen genau 100, der Wert ist damit unmittelbar ein
+Prozentwert und Punkt für Punkt nachrechenbar:
+
+| Kriterium | Gewicht | Erfüllt, wenn |
+| --- | --- | --- |
+| Beschreibung | 18 | Kurz- oder Langbeschreibung vorhanden |
+| Logo | 14 | Logo hinterlegt |
+| Titelbild | 12 | Titelbild hinterlegt |
+| Kontaktmöglichkeit | 12 | E-Mail, Telefon oder Buchungsadresse |
+| Kommende Ausgabe / Gründungsjahr | 12 | Fasnacht: Termin liegt in der Zukunft · Gugge: Gründungsjahr |
+| Website | 8 | Website hinterlegt |
+| Social Media | 8 | mindestens ein Profil |
+| Ort | 6 | Ort gesetzt |
+| Angaben zur Fasnacht / Gugge | 6 | Veranstalter, Zeitraum, Programm bzw. Stil, Repertoire, Mitgliederzahl |
+| Aussagekräftiger Name | 4 | mindestens zwei Zeichen |
+
+Zusätzlich, ohne Einfluss auf den Wert, werden gemeldet: nie überprüft, seit
+über 180 Tagen nicht überprüft, aus dem Import zur Prüfung vorgemerkt, als
+inaktiv eingestuft und mögliche Dubletten.
+
+**Dubletten** werden ausschliesslich gekennzeichnet – nichts wird
+zusammengeführt, verändert oder gelöscht. Erkannt werden identische Website,
+identische Kontaktadresse sowie sehr ähnliche Namen (Editierdistanz ab 75
+Prozent Übereinstimmung) innerhalb desselben Kantons, Typs und Orts. Diese
+Eingrenzung ist zugleich die inhaltlich richtige – zwei Einträge derselben
+Einrichtung tragen denselben Ort – und der Grund, weshalb die Auswertung auch
+bei mehreren tausend Profilen schnell bleibt: gemessen 131 Millisekunden für
+10 000 Organisationen einschliesslich Bewertung, Dublettenprüfung, Kennzahlen
+und Sortierung.
 
 ### Benutzerkonto und Organisation sind getrennt
 
@@ -459,6 +509,63 @@ der organisationsinternen in `ORG_ROLE_CAPABILITIES`. Neue Fähigkeiten werden
 ausschliesslich dort ergänzt.
 
 ---
+
+## Erscheinungsbild und Farbschema
+
+Das Farbsystem steht vollständig als CSS-Variablen in `src/app/globals.css`;
+`tailwind.config.ts` verknüpft sie nur noch. Eine Änderung des Farbsystems
+erfolgt damit an genau einer Stelle, Komponenten enthalten keine eigenen
+Hex-Werte.
+
+Die Werte stammen aus dem Fas-Nav-Logo:
+
+| Farbe | Wert | Rolle |
+| --- | --- | --- |
+| Navy | `#09162a` | Grundfarbe, Schrift, dunkle Markenflächen |
+| Blau | `#0279ad` | primärer Akzent: Schaltflächen, Links, aktive Navigation, Fokus |
+| Rot | `#c2171f` | Fasnachts- und Schweiz-Akzent, Hervorhebungen, Fehler |
+| Gold | `#feaa19` | sekundärer Akzent, Warnungen |
+
+Die kräftigen Farben stehen bewusst nur auf kleinen Flächen. Grosse Flächen
+bleiben neutral; der Wiedererkennungswert entsteht über Logo, Typografie und
+die Navy-Basis.
+
+### Hell, Dunkel und System
+
+Die Umschaltung läuft über `next-themes` (`src/components/theme/`). Ein
+Umschalter steht im öffentlichen Kopfbereich und im Fuss der Dashboard-
+Seitenleiste. Ohne eigene Auswahl gilt die Einstellung des Betriebssystems;
+eine getroffene Auswahl liegt im `localStorage` unter `fasnav-theme` und
+überschreibt sie. Eine Datenbankänderung ist dafür nicht nötig.
+
+Das dunkle Thema ist kein umgekehrtes helles: Grundlage ist ein sehr dunkles
+Navy statt Schwarz, Karten sind eine Spur heller abgesetzt und der Fliesstext
+ist ein leicht gedämpftes Weiss.
+
+**Aufbau der Skalen.** `primary`, `accent`, `gold` und die neutralen Stufen
+(auch unter dem Namen `slate` erreichbar) sind ebenfalls Variablen. Im dunklen
+Modus kehrt sich die Reihenfolge der neutralen Stufen um, sodass etwa
+`text-slate-700` dort automatisch ein helles Grau ergibt – ohne dass jede
+Komponente angefasst werden muss. Flächen, die bewusst in beiden Modi dunkel
+bleiben (Seitenleiste, Fusszeile, Hero), verwenden dafür die eigenen
+Marken-Token `bg-brand`, `bg-brand-strong` und `text-brand-accent`.
+
+### Logo und Icons
+
+| Datei | Verwendung |
+| --- | --- |
+| `public/brand/fas-nav-logo.png` / `.webp` | vollständiges Logo |
+| `public/brand/fas-nav-logo-transparent.png` | ohne weissen Hintergrund, für Markenflächen |
+| `public/brand/fas-nav-mark.svg`, `public/icon.svg` | FN-Signet, Favicon |
+| `public/apple-icon.png`, `public/brand/icon-192.png`, `icon-512.png` | App-Icons |
+| `public/brand/og-default.png` | Vorschaubild für OpenGraph |
+
+Das vollständige Logo ist für kleine Flächen zu fein gezeichnet. Kopfbereich,
+Seitenleiste und Favicon verwenden deshalb das FN-Signet, das die
+Buchstabenform und die drei Fasnachtsfarben aufnimmt und bis 16 Pixel lesbar
+bleibt. Das Logo ist für hellen Grund gezeichnet; auf der dunklen Markenfläche
+der Anmeldeseite steht es auf einer ruhigen hellen Trägerfläche, damit seine
+Navy-Buchstaben nicht verschwinden und die Gestaltung unverändert bleibt.
 
 ## Sicherheit
 

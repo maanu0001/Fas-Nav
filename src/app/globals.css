@@ -2,43 +2,277 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Farbsystem von Fas-Nav.ch
+ *
+ * Alle Farben stehen als CSS-Variablen an genau einer Stelle. Komponenten
+ * verwenden ausschliesslich die daraus abgeleiteten Tailwind-Klassen, nie
+ * eigene Hex-Werte – so lässt sich das Erscheinungsbild zentral ändern.
+ *
+ * Die Werte stammen aus dem Fas-Nav-Logo:
+ *   Navy   #09162a  Grundfarbe, Schrift und dunkle Markenflächen
+ *   Blau   #0279ad  primärer Akzent: Schaltflächen, Links, aktive Navigation
+ *   Rot    #c2171f  Fasnachts- und Schweiz-Akzent, Fehler
+ *   Gold   #feaa19  sekundärer Akzent, Warnungen
+ *
+ * Die kräftigen Farben werden gezielt eingesetzt, grosse Flächen bleiben
+ * neutral. Der Wiedererkennungswert entsteht über Logo, Typografie und die
+ * Navy-Basis, nicht über bunte Flächen.
+ *
+ * Aufbau der Skalen: primary, accent und slate sind ebenfalls über Variablen
+ * definiert. Im dunklen Modus wird die Reihenfolge der neutralen Stufen
+ * umgekehrt, sodass "text-slate-700" dort automatisch ein helles Grau ergibt.
+ * Flächen, die bewusst dunkel sind (Navigation, Fusszeile, Hero), verwenden
+ * dafür eigene Marken-Variablen und bleiben in beiden Modi dunkel.
+ */
+
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 219 47% 11%;
+    /* --- Grundflächen und Schrift --- */
+    --background: 210 40% 99%;
+    --foreground: 215 55% 11%;
+
+    --surface: 0 0% 100%;
+    --surface-secondary: 213 38% 96%;
 
     --card: 0 0% 100%;
-    --card-foreground: 219 47% 11%;
+    --card-foreground: 215 55% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 219 47% 11%;
+    --popover-foreground: 215 55% 11%;
 
-    --primary: 217 60% 24%;
-    --primary-foreground: 210 40% 98%;
+    --secondary: 213 38% 96%;
+    --secondary-foreground: 215 50% 18%;
 
-    --secondary: 215 30% 96%;
-    --secondary-foreground: 217 60% 24%;
+    --muted: 213 34% 96%;
+    --muted-foreground: 214 14% 42%;
 
-    --muted: 215 25% 96%;
-    --muted-foreground: 215 16% 45%;
+    --border: 214 24% 89%;
+    --input: 214 24% 89%;
+    --ring: 199 97% 34%;
+    --focus-ring: 199 97% 34%;
 
-    --accent: 14 88% 52%;
+    /* --- Marke: Blau als primärer Akzent --- */
+    --primary: 199 97% 34%;
+    --primary-foreground: 0 0% 100%;
+
+    /* --- Marke: Rot als Fasnachts- und Schweiz-Akzent --- */
+    --accent: 357 79% 43%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 72% 45%;
+    /* --- Statusfarben --- */
+    --destructive: 357 79% 43%;
     --destructive-foreground: 0 0% 100%;
-
-    --success: 152 58% 33%;
+    --success: 158 64% 28%;
     --success-foreground: 0 0% 100%;
+    --warning: 38 99% 44%;
+    --warning-foreground: 30 60% 12%;
+    --info: 199 97% 34%;
+    --info-foreground: 0 0% 100%;
 
-    --warning: 38 92% 45%;
-    --warning-foreground: 0 0% 100%;
+    /*
+     * Bewusst dunkle Markenflächen: Navigation, Fusszeile, Hero.
+     * Sie sind in beiden Modi dunkel und werden nicht umgekehrt.
+     */
+    --brand-surface: 215 66% 11%;
+    --brand-surface-strong: 216 70% 8%;
+    --brand-surface-foreground: 210 30% 96%;
+    /* Akzent auf dunklen Markenflächen – in beiden Modi gleich hell. */
+    --brand-accent: 357 88% 74%;
 
-    --border: 215 20% 89%;
-    --input: 215 20% 89%;
-    --ring: 217 60% 32%;
+    /* --- Primärskala (Navy nach Blau) --- */
+    --primary-50: 205 60% 97%;
+    --primary-100: 205 55% 92%;
+    --primary-200: 203 52% 84%;
+    --primary-300: 201 50% 70%;
+    --primary-400: 200 60% 52%;
+    --primary-500: 199 90% 40%;
+    --primary-600: 199 97% 34%;
+    --primary-700: 205 70% 26%;
+    --primary-800: 212 62% 19%;
+    --primary-900: 215 66% 13%;
+    --primary-950: 216 70% 8%;
+
+    /* --- Akzentskala (Rot) --- */
+    --accent-50: 0 86% 97%;
+    --accent-100: 357 85% 94%;
+    --accent-200: 357 82% 87%;
+    --accent-300: 357 80% 76%;
+    --accent-400: 357 76% 61%;
+    --accent-500: 357 74% 50%;
+    --accent-600: 357 79% 43%;
+    --accent-700: 357 78% 35%;
+    --accent-800: 356 72% 29%;
+    --accent-900: 355 68% 25%;
+
+    /* --- Goldskala (sekundärer Akzent, Warnungen) --- */
+    --gold-50: 45 100% 96%;
+    --gold-100: 44 96% 89%;
+    --gold-200: 43 95% 78%;
+    --gold-300: 41 95% 65%;
+    --gold-400: 39 97% 55%;
+    --gold-500: 38 99% 48%;
+    --gold-600: 34 95% 42%;
+    --gold-700: 29 88% 34%;
+    --gold-800: 26 80% 29%;
+    --gold-900: 24 74% 25%;
+
+    /* --- Neutrale Skala --- */
+    --neutral-50: 210 40% 98%;
+    --neutral-100: 213 38% 96%;
+    --neutral-200: 214 30% 91%;
+    --neutral-300: 213 24% 84%;
+    --neutral-400: 214 18% 64%;
+    --neutral-500: 215 16% 50%;
+    --neutral-600: 215 19% 39%;
+    --neutral-700: 215 25% 29%;
+    --neutral-800: 215 33% 20%;
+    --neutral-900: 215 45% 14%;
+    --neutral-950: 216 60% 9%;
+
+    /* --- Statusskalen --- */
+    --danger-100: 357 85% 94%;
+    --danger-500: 357 74% 50%;
+    --danger-700: 357 78% 35%;
+    --danger-800: 356 72% 29%;
+    --positive-100: 152 60% 90%;
+    --positive-500: 158 64% 38%;
+    --positive-700: 158 64% 26%;
+    --positive-800: 158 62% 21%;
+    --sky-100: 202 90% 92%;
+    --sky-500: 199 90% 45%;
+    --sky-700: 202 78% 30%;
+    --sky-900: 205 70% 22%;
 
     --radius: 0.7rem;
+
+    --shadow-color: 215 45% 14%;
+    --shadow-opacity-subtle: 0.06;
+    --shadow-opacity-card: 0.12;
+
+    color-scheme: light;
+  }
+
+  .dark {
+    /*
+     * Bewusst gestaltetes dunkles Thema, keine Umkehrung der Helligkeiten.
+     * Grundlage ist ein sehr dunkles Navy statt Schwarz, Karten sind eine
+     * Spur heller, der Fliesstext ist ein leicht gedämpftes Weiss.
+     */
+    --background: 216 52% 7%;
+    --foreground: 210 30% 92%;
+
+    --surface: 215 42% 10%;
+    --surface-secondary: 215 38% 14%;
+
+    --card: 215 42% 10%;
+    --card-foreground: 210 30% 92%;
+
+    --popover: 215 44% 12%;
+    --popover-foreground: 210 30% 92%;
+
+    --secondary: 215 38% 15%;
+    --secondary-foreground: 210 28% 88%;
+
+    --muted: 215 36% 16%;
+    --muted-foreground: 214 16% 66%;
+
+    --border: 214 26% 22%;
+    --input: 214 26% 24%;
+    --ring: 199 90% 58%;
+    --focus-ring: 199 90% 58%;
+
+    /* Akzente werden aufgehellt, damit sie auf Dunkel lesbar bleiben. */
+    --primary: 199 88% 52%;
+    --primary-foreground: 216 60% 8%;
+
+    --accent: 357 78% 61%;
+    --accent-foreground: 216 60% 8%;
+
+    --destructive: 357 78% 63%;
+    --destructive-foreground: 216 60% 8%;
+    --success: 158 55% 55%;
+    --success-foreground: 216 60% 8%;
+    --warning: 40 92% 60%;
+    --warning-foreground: 30 60% 10%;
+    --info: 199 88% 60%;
+    --info-foreground: 216 60% 8%;
+
+    /* Markenflächen bleiben dunkel, werden aber vom Grund abgesetzt. */
+    --brand-surface: 215 45% 12%;
+    --brand-surface-strong: 216 55% 9%;
+    --brand-surface-foreground: 210 30% 94%;
+    --brand-accent: 357 88% 74%;
+
+    /*
+     * Die neutralen und die Primärskala kehren sich um: "text-slate-700"
+     * bleibt damit die gedämpfte Textfarbe und "bg-primary-50" eine leicht
+     * abgesetzte Fläche – ohne dass jede Komponente angefasst werden muss.
+     */
+    --primary-50: 215 40% 15%;
+    --primary-100: 215 38% 19%;
+    --primary-200: 214 32% 26%;
+    --primary-300: 210 30% 38%;
+    --primary-400: 203 45% 52%;
+    --primary-500: 199 70% 62%;
+    --primary-600: 199 85% 66%;
+    --primary-700: 199 80% 74%;
+    --primary-800: 201 70% 82%;
+    --primary-900: 205 55% 90%;
+    --primary-950: 210 40% 96%;
+
+    --accent-50: 356 40% 16%;
+    --accent-100: 356 45% 22%;
+    --accent-200: 356 50% 30%;
+    --accent-300: 357 55% 42%;
+    --accent-400: 357 65% 54%;
+    --accent-500: 357 74% 62%;
+    --accent-600: 357 82% 74%;
+    --accent-700: 357 80% 80%;
+    --accent-800: 356 70% 84%;
+    --accent-900: 355 60% 90%;
+
+    --gold-50: 30 45% 15%;
+    --gold-100: 32 50% 21%;
+    --gold-200: 34 55% 29%;
+    --gold-300: 36 65% 40%;
+    --gold-400: 38 80% 52%;
+    --gold-500: 40 90% 60%;
+    --gold-600: 41 92% 66%;
+    --gold-700: 43 90% 74%;
+    --gold-800: 44 85% 82%;
+    --gold-900: 45 80% 88%;
+
+    --neutral-50: 216 45% 12%;
+    --neutral-100: 215 40% 16%;
+    --neutral-200: 215 34% 22%;
+    --neutral-300: 214 26% 32%;
+    --neutral-400: 214 18% 50%;
+    --neutral-500: 214 16% 62%;
+    --neutral-600: 214 18% 72%;
+    --neutral-700: 213 22% 80%;
+    --neutral-800: 211 28% 87%;
+    --neutral-900: 210 32% 92%;
+    --neutral-950: 210 40% 97%;
+
+    --danger-100: 356 45% 24%;
+    --danger-500: 357 74% 62%;
+    --danger-700: 357 72% 76%;
+    --danger-800: 356 68% 83%;
+    --positive-100: 158 40% 20%;
+    --positive-500: 158 55% 55%;
+    --positive-700: 155 50% 74%;
+    --positive-800: 155 48% 82%;
+    --sky-100: 205 45% 22%;
+    --sky-500: 199 80% 58%;
+    --sky-700: 200 70% 76%;
+    --sky-900: 202 60% 86%;
+
+    --shadow-color: 216 70% 3%;
+    --shadow-opacity-subtle: 0.4;
+    --shadow-opacity-card: 0.55;
+
+    color-scheme: dark;
   }
 
   * {
@@ -74,9 +308,9 @@
   /* Dezenter Verlauf für Hero-Flächen – festlich, aber zurückhaltend. */
   .bg-hero {
     background-image:
-      radial-gradient(ellipse 80% 60% at 15% 0%, hsl(217 60% 30% / 0.55), transparent 60%),
-      radial-gradient(ellipse 70% 60% at 95% 20%, hsl(14 88% 52% / 0.22), transparent 62%),
-      linear-gradient(165deg, hsl(219 65% 13%), hsl(217 60% 20%));
+      radial-gradient(ellipse 80% 60% at 15% 0%, hsl(var(--brand-surface) / 0.9), transparent 60%),
+      radial-gradient(ellipse 70% 60% at 95% 20%, hsl(var(--accent) / 0.18), transparent 62%),
+      linear-gradient(165deg, hsl(var(--brand-surface-strong)), hsl(var(--brand-surface)));
   }
 
   .bg-grid {
@@ -86,14 +320,25 @@
     background-size: 56px 56px;
   }
 
-  /* Schweizerkreuz-Anmutung als feines Muster. */
+  /* Konfetti-Anmutung – die Logofarben, sehr zurückgenommen. */
   .bg-confetti {
     background-image:
-      radial-gradient(circle at 12% 24%, hsl(14 88% 52% / 0.14) 3px, transparent 3px),
-      radial-gradient(circle at 68% 12%, hsl(217 60% 40% / 0.12) 3px, transparent 3px),
-      radial-gradient(circle at 84% 72%, hsl(38 92% 50% / 0.12) 3px, transparent 3px),
-      radial-gradient(circle at 34% 82%, hsl(152 58% 40% / 0.10) 3px, transparent 3px);
+      radial-gradient(circle at 12% 24%, hsl(var(--accent) / 0.16) 3px, transparent 3px),
+      radial-gradient(circle at 68% 12%, hsl(var(--primary) / 0.14) 3px, transparent 3px),
+      radial-gradient(circle at 84% 72%, hsl(var(--gold-500) / 0.14) 3px, transparent 3px),
+      radial-gradient(circle at 34% 82%, hsl(var(--primary) / 0.10) 3px, transparent 3px);
     background-size: 220px 220px;
+  }
+
+  /* Bewusst dunkle Markenfläche, in beiden Modi dunkel. */
+  .surface-brand {
+    background-color: hsl(var(--brand-surface));
+    color: hsl(var(--brand-surface-foreground));
+  }
+
+  .surface-brand-strong {
+    background-color: hsl(var(--brand-surface-strong));
+    color: hsl(var(--brand-surface-foreground));
   }
 
   .prose-fasnav {
@@ -109,7 +354,7 @@
   }
 
   .skeleton::after {
-    @apply absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/60 to-transparent;
+    @apply absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-foreground/10 to-transparent;
     content: "";
   }
 }
