@@ -28,11 +28,18 @@ export function dashboardNavigation(role: Role): NavGroup[] {
       {
         title: "Inhalte",
         items: [
-          { href: "/dashboard/homepage", label: "Homepage", icon: "layout" },
+          // Startseite und Datenimport sind der Administration vorbehalten.
+          // Die Prüfung erfolgt zusätzlich serverseitig in jeder Seite und in
+          // jedem Endpunkt; diese Filterung dient allein der Benutzerführung.
+          ...(isAdmin(role)
+            ? [{ href: "/dashboard/homepage", label: "Homepage", icon: "layout" }]
+            : []),
           { href: "/dashboard/organisationen", label: "Organisationen", icon: "building" },
           { href: "/dashboard/agenda", label: "Agenda", icon: "calendar" },
           { href: "/dashboard/medien", label: "Medien", icon: "image" },
-          { href: "/dashboard/import", label: "Datenimport", icon: "upload" },
+          ...(isAdmin(role)
+            ? [{ href: "/dashboard/import", label: "Datenimport", icon: "upload" }]
+            : []),
         ],
       },
       {

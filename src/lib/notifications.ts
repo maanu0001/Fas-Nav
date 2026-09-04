@@ -2,6 +2,7 @@ import type { NotificationType } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 import { sendMail } from "@/lib/mail";
+import { STAFF_ROLES } from "@/lib/rbac";
 
 type NotifyInput = {
   userId: string;
@@ -70,7 +71,7 @@ export async function notifyStaff(
   input: Omit<NotifyInput, "userId">,
 ): Promise<void> {
   const staff = await prisma.user.findMany({
-    where: { role: { in: ["SUPERADMIN", "ADMIN", "TEAM"] }, isActive: true },
+    where: { role: { in: STAFF_ROLES }, isActive: true },
     select: { id: true },
   });
   await Promise.all(staff.map((u) => notify({ ...input, userId: u.id })));

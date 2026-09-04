@@ -415,12 +415,17 @@ pseudonyme Besucherzählung werten diesen Header aus.
 
 | Rolle | Rechte |
 | --- | --- |
-| `SUPERADMIN` | Wie Admin, für spätere Abstufungen vorgesehen |
-| `ADMIN` | Vollzugriff inklusive Team-Accounts, Tarifen und Einstellungen |
-| `TEAM` | Wie Admin, **ohne** Team-/Admin-Accounts, Tarife und Einstellungen |
+| `ADMIN` | Vollzugriff inklusive Startseite, Datenimport, Team-Accounts, Tarifen und Einstellungen |
+| `TEAM` | Wie Admin, **ohne** Startseite, Datenimport, Team-/Admin-Accounts, Tarife und Einstellungen |
 | `FASNACHT` | Kontotyp Fasnacht – Zugriff nur über zugewiesene Organisationen |
 | `GUGGE` | Kontotyp Gugge – Zugriff nur über zugewiesene Organisationen |
-| `VISITOR` | Vorbereitet für Besucherkonten (Favoriten) |
+
+Die Startseite und der Datenimport verändern den öffentlichen Auftritt
+beziehungsweise den Datenbestand in grossem Umfang und sind deshalb allein
+`ADMIN` vorbehalten. Für ein `TEAM`-Konto fehlen die Menüpunkte nicht nur in
+der Navigation: Sowohl die Seiten `/dashboard/homepage` und `/dashboard/import`
+als auch die Endpunkte unter `/api/homepage` und `/api/import` prüfen die
+Berechtigungen `manageHomepage` und `importData` serverseitig.
 
 ### Benutzerkonto und Organisation sind getrennt
 
@@ -554,8 +559,9 @@ src/lib/
    30 Tage vor Ablauf erinnert und danach in den eingeschränkten Modus schaltet.
 5. **Object Storage.** `StorageAdapter` in `src/lib/storage.ts` implementieren
    (S3 oder Cloudflare R2) und `STORAGE_DRIVER` umstellen.
-6. **Besucherkonten und Favoriten.** Modell `Favorite` und Rolle `VISITOR`
-   bestehen; es fehlen Registrierung und Oberfläche.
+6. **Besucherkonten und Favoriten.** Das Modell `Favorite` besteht; es fehlen
+   Registrierung und Oberfläche. Eine eigene Besucherrolle gibt es nicht mehr –
+   sie müsste zusammen mit der Registrierung neu eingeführt werden.
 7. **Volltextsuche.** Aktuell `ILIKE`-basiert. Für grössere Datenmengen bietet
    sich ein PostgreSQL-`tsvector` mit deutschem Wörterbuch an.
 8. **Kartenansicht.** `latitude`/`longitude` sind im Modell vorhanden, die

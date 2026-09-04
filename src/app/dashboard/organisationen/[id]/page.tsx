@@ -8,6 +8,8 @@ import { ResearchPanel } from "@/components/dashboard/import/research-panel";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { editorSelect, publicHrefFor, toEditorState } from "@/lib/editor-state";
 import { requireStaffPage } from "@/lib/dashboard-context";
+import { can } from "@/lib/rbac";
+import type { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -25,7 +27,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 
 export default async function AdminOrganizationPage({ params }: Params) {
   const { id } = await params;
-  await requireStaffPage();
+  const { user } = await requireStaffPage();
 
   const [organization, cantons, plans, members] = await Promise.all([
     prisma.organization.findUnique({
@@ -126,7 +128,7 @@ export default async function AdminOrganizationPage({ params }: Params) {
       />
 
       <div className="mt-6">
-        <ResearchPanel data={organization} />
+        <ResearchPanel data={organization} canOpenImportJob={can(user.role as Role, "importData")} />
       </div>
 
       <div className="mt-6">

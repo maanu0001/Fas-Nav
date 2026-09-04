@@ -15,12 +15,14 @@ datasource db {
 // ---------------------------------------------------------------------------
 
 enum Role {
-  SUPERADMIN
+  /// Vollzugriff auf die Plattform inklusive Startseite, Import und Einstellungen.
   ADMIN
+  /// Redaktion und Betreuung – ohne Startseite, Import, Tarife und Einstellungen.
   TEAM
+  /// Kontotyp Fasnacht. Zugriff ergibt sich ausschliesslich aus Membership.
   FASNACHT
+  /// Kontotyp Gugge. Zugriff ergibt sich ausschliesslich aus Membership.
   GUGGE
-  VISITOR
 }
 
 enum OrganizationType {
@@ -277,7 +279,8 @@ model User {
   emailVerified  DateTime?
   name           String
   passwordHash   String?
-  role           Role      @default(VISITOR)
+  /// Kein Standardwert: Die Rolle wird beim Anlegen bewusst gesetzt.
+  role           Role
   isActive       Boolean   @default(true)
   phone          String?
   locale         String    @default("de-CH")

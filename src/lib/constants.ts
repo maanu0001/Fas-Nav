@@ -101,12 +101,10 @@ export const CLAIM_STATUS_LABELS: Record<ClaimStatus, string> = {
 };
 
 export const ROLE_LABELS: Record<Role, string> = {
-  SUPERADMIN: "Superadmin",
   ADMIN: "Admin",
   TEAM: "Team",
   FASNACHT: "Fasnacht",
   GUGGE: "Gugge",
-  VISITOR: "Besucher",
 };
 
 /** Bezeichnungen der organisationsinternen Berechtigungen. */

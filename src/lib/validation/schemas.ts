@@ -56,7 +56,7 @@ export const changePasswordSchema = z
 // Benutzer
 // ---------------------------------------------------------------------------
 
-export const roleEnum = z.enum(["SUPERADMIN", "ADMIN", "TEAM", "FASNACHT", "GUGGE", "VISITOR"]);
+export const roleEnum = z.enum(["ADMIN", "TEAM", "FASNACHT", "GUGGE"]);
 export const membershipRoleEnum = z.enum(["OWNER", "MANAGER", "EDITOR"]);
 
 export const createUserSchema = z.object({

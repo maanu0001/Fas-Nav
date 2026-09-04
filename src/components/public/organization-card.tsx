@@ -65,8 +65,14 @@ export function OrganizationCard({
       </div>
 
       <div className="flex flex-1 flex-col p-4">
-        <div className="flex items-start gap-3">
-          <LogoImage media={org.logo} name={org.name} size={48} className="-mt-9 shadow-subtle" />
+        {/*
+          Logo und Name bilden eine gemeinsame Zeile: das Logo links, vertikal
+          zur Namenszeile zentriert. Die feste Kachelgrösse und "shrink-0"
+          halten die Zeile unabhängig von den Massen des hochgeladenen Logos
+          stabil, sodass kein Layoutsprung entsteht.
+        */}
+        <div className="flex items-center gap-3">
+          <LogoImage media={org.logo} name={org.name} size={48} className="shadow-subtle" />
           <div className="min-w-0 flex-1">
             <h3 className="truncate font-display text-base font-semibold text-primary-900">
               <Link href={href} className="after:absolute after:inset-0 after:content-['']">

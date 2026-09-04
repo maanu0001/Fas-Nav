@@ -42,7 +42,19 @@ export type ResearchData = {
  * Ausschliesslich im Adminbereich sichtbar – die öffentliche Seite gibt
  * diese Angaben nicht aus.
  */
-export function ResearchPanel({ data }: { data: ResearchData }) {
+export function ResearchPanel({
+  data,
+  /**
+   * Nur die Administration darf Importläufe öffnen. Ohne diese Berechtigung
+   * wird die Referenz als reiner Text ausgegeben, damit kein Verweis ins
+   * Leere führt. Die Recherchedaten selbst gehören zur Organisation und
+   * bleiben für das Team sichtbar.
+   */
+  canOpenImportJob = false,
+}: {
+  data: ResearchData;
+  canOpenImportJob?: boolean;
+}) {
   const isImported = Boolean(data.externalImportId);
   if (!isImported && data.sources.length === 0) return null;
 
@@ -183,12 +195,16 @@ export function ResearchPanel({ data }: { data: ResearchData }) {
       {data.lastImportJob ? (
         <p className="mt-5 text-xs text-muted-foreground">
           Zuletzt aktualisiert durch{" "}
-          <Link
-            href={`/dashboard/import/${data.lastImportJob.id}`}
-            className="font-mono text-primary-700 hover:underline"
-          >
-            {data.lastImportJob.reference}
-          </Link>
+          {canOpenImportJob ? (
+            <Link
+              href={`/dashboard/import/${data.lastImportJob.id}`}
+              className="font-mono text-primary-700 hover:underline"
+            >
+              {data.lastImportJob.reference}
+            </Link>
+          ) : (
+            <span className="font-mono">{data.lastImportJob.reference}</span>
+          )}
           {data.importedAt ? ` am ${formatDateShort(data.importedAt)}` : ""}
         </p>
       ) : null}

@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 export type SessionUser = Session["user"];
 
 /** Rollen mit plattformweiten Rechten. */
-export const STAFF_ROLES: Role[] = ["SUPERADMIN", "ADMIN", "TEAM"];
+export const STAFF_ROLES: Role[] = ["ADMIN", "TEAM"];
 /** Rollen, die einer Organisation zugeordnet sind. */
 export const ORG_ROLES: Role[] = ["FASNACHT", "GUGGE"];
 
@@ -16,7 +16,7 @@ export function isStaff(role: Role | undefined | null): boolean {
 }
 
 export function isAdmin(role: Role | undefined | null): boolean {
-  return role === "ADMIN" || role === "SUPERADMIN";
+  return role === "ADMIN";
 }
 
 export function isOrgRole(role: Role | undefined | null): boolean {
@@ -28,7 +28,7 @@ export function isOrgRole(role: Role | undefined | null): boolean {
  * das Frontend blendet lediglich zusätzlich aus.
  */
 export const PERMISSIONS = {
-  /** Nur ADMIN/SUPERADMIN dürfen Team- und Adminaccounts verwalten. */
+  /** Nur ADMIN darf Team- und Adminaccounts verwalten. */
   manageStaffAccounts: (role: Role) => isAdmin(role),
   manageOrgAccounts: (role: Role) => isStaff(role),
   manageOrganizations: (role: Role) => isStaff(role),
@@ -36,15 +36,20 @@ export const PERMISSIONS = {
   manageSubscriptions: (role: Role) => isStaff(role),
   managePayments: (role: Role) => isStaff(role),
   managePlans: (role: Role) => isAdmin(role),
-  manageHomepage: (role: Role) => isStaff(role),
+  /** Die Startseite gestaltet ausschliesslich die Administration. */
+  manageHomepage: (role: Role) => isAdmin(role),
   manageSettings: (role: Role) => isAdmin(role),
   managePlacements: (role: Role) => isStaff(role),
   viewAllTickets: (role: Role) => isStaff(role),
   viewAuditLog: (role: Role) => isStaff(role),
   viewPlatformStats: (role: Role) => isStaff(role),
   verifyOrganizations: (role: Role) => isStaff(role),
-  /** Recherchedateien analysieren, importieren und rückgängig machen. */
-  importData: (role: Role) => isStaff(role),
+  /**
+   * Recherchedateien analysieren, importieren und rückgängig machen.
+   * Ein Import verändert den öffentlichen Datenbestand in grossem Umfang und
+   * bleibt deshalb der Administration vorbehalten.
+   */
+  importData: (role: Role) => isAdmin(role),
 } as const;
 
 export type PermissionKey = keyof typeof PERMISSIONS;
@@ -90,7 +95,7 @@ export async function requireStaff(): Promise<SessionUser> {
 }
 
 export async function requireAdmin(): Promise<SessionUser> {
-  return requireRole(["ADMIN", "SUPERADMIN"]);
+  return requireRole(["ADMIN"]);
 }
 
 export async function requirePermission(permission: PermissionKey): Promise<SessionUser> {
@@ -109,7 +114,7 @@ export async function requirePermission(permission: PermissionKey): Promise<Sess
 // Die globalen Rollen FASNACHT und GUGGE gewähren für sich genommen
 // keinerlei Zugriff auf irgendeine Organisation.
 //
-// ADMIN, TEAM und SUPERADMIN besitzen plattformweiten Zugriff und benötigen
+// ADMIN und TEAM besitzen plattformweiten Zugriff und benötigen
 // dafür keine Membership.
 // ---------------------------------------------------------------------------
 

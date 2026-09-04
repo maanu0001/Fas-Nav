@@ -92,9 +92,7 @@ export function TicketThread({
           {initialMessages.map((message) => {
             const authorLabel = message.author?.name ?? message.authorName ?? "Unbekannt";
             const fromStaff =
-              message.author?.role === "ADMIN" ||
-              message.author?.role === "TEAM" ||
-              message.author?.role === "SUPERADMIN";
+              message.author?.role === "ADMIN" || message.author?.role === "TEAM";
 
             return (
               <li key={message.id}>

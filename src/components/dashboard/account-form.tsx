@@ -61,7 +61,7 @@ export function AccountForm({
 
   // Team-Accounts dürfen nur Administratoren vergeben.
   const availableRoles = (Object.keys(ROLE_LABELS) as Role[]).filter((role) =>
-    canManageStaff ? true : !["SUPERADMIN", "ADMIN", "TEAM"].includes(role),
+    canManageStaff ? true : !["ADMIN", "TEAM"].includes(role),
   );
 
   async function onSubmit(event: React.FormEvent) {
