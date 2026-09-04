@@ -1,0 +1,121 @@
+import Link from "next/link";
+
+import { LogoMark } from "@/components/ui/logo";
+import { CANTONS, SITE } from "@/lib/constants";
+
+const COLUMNS = [
+  {
+    title: "Entdecken",
+    links: [
+      { href: "/agenda", label: "Agenda" },
+      { href: "/fasnachten", label: "Fasnachten" },
+      { href: "/guggen", label: "Guggen" },
+      { href: "/kantone", label: "Kantone" },
+      { href: "/suche", label: "Suche" },
+    ],
+  },
+  {
+    title: "Für Organisationen",
+    links: [
+      { href: "/preise", label: "Preise & Abos" },
+      { href: "/organisation-eintragen", label: "Organisation eintragen" },
+      { href: "/login", label: "Anmelden" },
+      { href: "/kontakt", label: "Kontakt" },
+    ],
+  },
+  {
+    title: "Rechtliches",
+    links: [
+      { href: "/impressum", label: "Impressum" },
+      { href: "/datenschutz", label: "Datenschutz" },
+      { href: "/agb", label: "AGB" },
+      { href: "/cookies", label: "Cookie-Einstellungen" },
+    ],
+  },
+];
+
+/** Kantonslinks im Footer stärken die interne Verlinkung (SEO). */
+const FOOTER_CANTONS = CANTONS.filter((c) =>
+  ["SO", "LU", "BS", "BL", "AG", "BE", "ZH", "SZ", "OW", "NW", "ZG", "SG"].includes(c.code),
+);
+
+export function SiteFooter() {
+  const year = new Date().getFullYear();
+
+  return (
+    <footer className="mt-20 border-t border-border bg-primary-950 text-slate-300">
+      <div className="container py-14">
+        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-5">
+          <div className="lg:col-span-2">
+            <div className="flex items-center gap-2.5">
+              <LogoMark className="h-10 w-10 text-lg" variant="light" />
+              <span className="font-display text-lg font-bold text-white">
+                Fas-Nav<span className="text-white/50">.ch</span>
+              </span>
+            </div>
+            <p className="mt-4 max-w-sm text-sm leading-relaxed text-slate-400">
+              {SITE.description}
+            </p>
+            <p className="mt-5 text-xs text-slate-500">
+              Ein Schweizer Projekt für die Fasnachtsszene – von der Vorfasnacht bis zum
+              Abschluss.
+            </p>
+          </div>
+
+          {COLUMNS.map((column) => (
+            <div key={column.title}>
+              <h2 className="font-display text-sm font-semibold uppercase tracking-wider text-white">
+                {column.title}
+              </h2>
+              <ul className="mt-4 space-y-2.5">
+                {column.links.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="text-sm text-slate-400 transition-colors hover:text-white"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-12 border-t border-white/10 pt-8">
+          <h2 className="font-display text-sm font-semibold uppercase tracking-wider text-white">
+            Fasnacht nach Kanton
+          </h2>
+          <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-2.5">
+            {FOOTER_CANTONS.map((canton) => (
+              <li key={canton.code}>
+                <Link
+                  href={`/kanton/${canton.slug}`}
+                  className="text-sm text-slate-400 transition-colors hover:text-white"
+                >
+                  Fasnacht {canton.name}
+                </Link>
+              </li>
+            ))}
+            <li>
+              <Link
+                href="/kantone"
+                className="text-sm font-medium text-accent-400 transition-colors hover:text-accent-300"
+              >
+                Alle Kantone →
+              </Link>
+            </li>
+          </ul>
+        </div>
+
+        <div className="mt-10 flex flex-col gap-3 border-t border-white/10 pt-7 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+          <p>
+            © {year} {SITE.name} · Alle Rechte vorbehalten.
+          </p>
+          <p>Mit Freude gemacht in der Schweiz 🇨🇭</p>
+        </div>
+      </div>
+    </footer>
+  );
+}

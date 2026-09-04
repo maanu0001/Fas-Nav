@@ -1,0 +1,49 @@
+import { handleApiError, jsonOk, parseBody } from "@/lib/api";
+import { logAudit } from "@/lib/audit";
+import { prisma } from "@/lib/prisma";
+import { requirePermission } from "@/lib/rbac";
+import { planSchema } from "@/lib/validation/schemas";
+
+export const dynamic = "force-dynamic";
+
+/** Neuen Tarif anlegen. Preise und Funktionen sind vollständig konfigurierbar. */
+export async function POST(request: Request) {
+  try {
+    const actor = await requirePermission("managePlans");
+    const body = await parseBody(request, planSchema);
+    const { features, ...planData } = body;
+
+    const plan = await prisma.plan.create({
+      data: {
+        ...planData,
+        ...(features?.length
+          ? {
+              features: {
+                create: features.map((f) => ({
+                  featureId: f.featureId,
+                  enabled: f.enabled,
+                  limit: f.limit,
+                  note: f.note,
+                })),
+              },
+            }
+          : {}),
+      },
+      select: { id: true, key: true, name: true, priceChf: true, tier: true },
+    });
+
+    await logAudit({
+      userId: actor.id,
+      userLabel: actor.email,
+      action: "plan.create",
+      entity: "Plan",
+      entityId: plan.id,
+      entityLabel: plan.name,
+      after: { key: plan.key, priceChf: plan.priceChf },
+    });
+
+    return jsonOk(plan, 201);
+  } catch (error) {
+    return handleApiError(error);
+  }
+}

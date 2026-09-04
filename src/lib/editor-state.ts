@@ -1,0 +1,84 @@
+import type { Prisma } from "@prisma/client";
+
+import type { EditorState } from "@/components/dashboard/editor/types";
+import { toDateInputValue } from "@/lib/dates";
+
+export const editorSelect = {
+  id: true,
+  name: true,
+  slug: true,
+  type: true,
+  status: true,
+  shortName: true,
+  tagline: true,
+  shortDescription: true,
+  description: true,
+  history: true,
+  importantInfo: true,
+  city: true,
+  street: true,
+  zip: true,
+  cantonId: true,
+  contactName: true,
+  contactEmail: true,
+  contactPhone: true,
+  website: true,
+  bookingEmail: true,
+  startDate: true,
+  endDate: true,
+  foundedYear: true,
+  memberCount: true,
+  repertoire: true,
+  musicStyle: true,
+  metaTitle: true,
+  metaDesc: true,
+  logo: { select: { id: true, url: true, thumbnailUrl: true, alt: true, width: true, height: true } },
+  header: { select: { id: true, url: true, thumbnailUrl: true, alt: true, width: true, height: true } },
+  socialLinks: {
+    select: { platform: true, url: true, label: true },
+    orderBy: { sortOrder: "asc" },
+  },
+} satisfies Prisma.OrganizationSelect;
+
+export type EditorOrganization = Prisma.OrganizationGetPayload<{ select: typeof editorSelect }>;
+
+/** Wandelt einen Datenbankdatensatz in den Formularzustand des Editors. */
+export function toEditorState(org: EditorOrganization): EditorState {
+  return {
+    name: org.name,
+    shortName: org.shortName ?? "",
+    tagline: org.tagline ?? "",
+    shortDescription: org.shortDescription ?? "",
+    description: org.description ?? "",
+    history: org.history ?? "",
+    importantInfo: org.importantInfo ?? "",
+    city: org.city,
+    street: org.street ?? "",
+    zip: org.zip ?? "",
+    cantonId: org.cantonId,
+    contactName: org.contactName ?? "",
+    contactEmail: org.contactEmail ?? "",
+    contactPhone: org.contactPhone ?? "",
+    website: org.website ?? "",
+    bookingEmail: org.bookingEmail ?? "",
+    startDate: toDateInputValue(org.startDate),
+    endDate: toDateInputValue(org.endDate),
+    foundedYear: org.foundedYear ? String(org.foundedYear) : "",
+    memberCount: org.memberCount !== null ? String(org.memberCount) : "",
+    repertoire: org.repertoire ?? "",
+    musicStyle: org.musicStyle ?? "",
+    metaTitle: org.metaTitle ?? "",
+    metaDesc: org.metaDesc ?? "",
+    logo: org.logo ?? null,
+    header: org.header ?? null,
+    socialLinks: org.socialLinks.map((link) => ({
+      platform: link.platform,
+      url: link.url,
+      label: link.label ?? "",
+    })),
+  };
+}
+
+export function publicHrefFor(org: { type: string; slug: string }): string {
+  return org.type === "CARNIVAL" ? `/fasnacht/${org.slug}` : `/gugge/${org.slug}`;
+}

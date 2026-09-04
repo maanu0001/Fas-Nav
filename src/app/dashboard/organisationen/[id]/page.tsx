@@ -1,0 +1,118 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+
+import { OrganizationEditor } from "@/components/dashboard/editor/organization-editor";
+import { OrganizationAdminPanel } from "@/components/dashboard/organization-admin-panel";
+import { PageHeader } from "@/components/dashboard/page-header";
+import { editorSelect, publicHrefFor, toEditorState } from "@/lib/editor-state";
+import { requireStaffPage } from "@/lib/dashboard-context";
+import { prisma } from "@/lib/prisma";
+
+export const dynamic = "force-dynamic";
+
+type Params = { params: Promise<{ id: string }> };
+
+export async function generateMetadata({ params }: Params): Promise<Metadata> {
+  const { id } = await params;
+  const org = await prisma.organization.findUnique({
+    where: { id },
+    select: { name: true },
+  });
+  return { title: org?.name ?? "Organisation" };
+}
+
+export default async function AdminOrganizationPage({ params }: Params) {
+  const { id } = await params;
+  await requireStaffPage();
+
+  const [organization, cantons, plans, members] = await Promise.all([
+    prisma.organization.findUnique({
+      where: { id },
+      select: {
+        ...editorSelect,
+        verification: true,
+        claimStatus: true,
+        isFeatured: true,
+        createdAt: true,
+        subscription: {
+          select: {
+            id: true,
+            status: true,
+            priceChf: true,
+            startDate: true,
+            endDate: true,
+            nextDueAt: true,
+            autoRenew: true,
+            planId: true,
+            plan: { select: { name: true } },
+          },
+        },
+      },
+    }),
+    prisma.canton.findMany({ select: { id: true, name: true, code: true }, orderBy: { name: "asc" } }),
+    prisma.plan.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true, priceChf: true, key: true },
+      orderBy: { sortOrder: "asc" },
+    }),
+    prisma.membership.findMany({
+      where: { organizationId: id },
+      select: {
+        id: true,
+        role: true,
+        title: true,
+        user: { select: { id: true, name: true, email: true, isActive: true, lastLoginAt: true } },
+      },
+    }),
+  ]);
+
+  if (!organization) notFound();
+
+  return (
+    <>
+      <PageHeader
+        title={organization.name}
+        description={`${organization.type === "CARNIVAL" ? "Fasnacht" : "Gugge"} in ${organization.city}`}
+        breadcrumbs={[
+          { href: "/dashboard/organisationen", label: "Organisationen" },
+          { label: organization.name },
+        ]}
+      />
+
+      <OrganizationAdminPanel
+        organizationId={organization.id}
+        slug={organization.slug}
+        status={organization.status}
+        verification={organization.verification}
+        claimStatus={organization.claimStatus}
+        isFeatured={organization.isFeatured}
+        plans={plans.map((p) => ({ ...p, priceChf: Number(p.priceChf) }))}
+        subscription={
+          organization.subscription
+            ? {
+                ...organization.subscription,
+                priceChf: Number(organization.subscription.priceChf),
+                startDate: organization.subscription.startDate.toISOString(),
+                endDate: organization.subscription.endDate?.toISOString() ?? null,
+                nextDueAt: organization.subscription.nextDueAt?.toISOString() ?? null,
+              }
+            : null
+        }
+        members={members}
+      />
+
+      <div className="mt-8">
+        <h2 className="mb-4 font-display text-lg font-bold">Inhalte bearbeiten</h2>
+        <OrganizationEditor
+          organizationId={organization.id}
+          type={organization.type}
+          status={organization.status}
+          publicHref={publicHrefFor(organization)}
+          cantons={cantons}
+          initial={toEditorState(organization)}
+          canPublish
+        />
+      </div>
+    </>
+  );
+}
