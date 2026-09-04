@@ -2,8 +2,8 @@
 # Aufruf: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 services:
   db:
-    # Die Datenbank ist von aussen nicht erreichbar.
-    ports: []
+    # Die Datenbank veröffentlicht keinen Port und ist nur über das interne
+    # Docker-Netz erreichbar.
     volumes:
       - db_data:/var/lib/postgresql/data
       - ./backups:/backups

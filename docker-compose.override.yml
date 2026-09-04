@@ -1,0 +1,14 @@
+# Bequemlichkeiten für die lokale Entwicklung.
+#
+# "docker compose" lädt diese Datei automatisch zusätzlich zu
+# docker-compose.yml. Beim Produktions-Deployment werden die Dateien dagegen
+# ausdrücklich benannt (docker-compose.yml + docker-compose.prod.yml); diese
+# Datei bleibt dort also aussen vor.
+services:
+  db:
+    ports:
+      - "5432:5432"
+
+  app:
+    ports:
+      - "3000:3000"

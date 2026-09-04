@@ -353,6 +353,20 @@ In der Produktionskonfiguration ist die Datenbank nicht nach aussen
 veröffentlicht und die Anwendung lauscht auf `127.0.0.1:3000` – davor gehört ein
 Reverse Proxy mit TLS.
 
+#### Aufteilung der Compose-Dateien
+
+| Datei | Rolle |
+| --- | --- |
+| `docker-compose.yml` | Dienste, Umgebung, Volumes – **ohne** veröffentlichte Ports |
+| `docker-compose.override.yml` | Ports für die lokale Entwicklung; wird von `docker compose` automatisch geladen |
+| `docker-compose.prod.yml` | Produktion: Anwendung nur auf `127.0.0.1:3000`, Datenbank gar nicht |
+
+Compose hängt `ports` aus mehreren Dateien aneinander, statt sie zu ersetzen.
+Eine Veröffentlichung in der Basisdatei liesse sich in der Produktion deshalb
+nicht mehr zurücknehmen – auch ein `ports: []` im Overlay bewirkt nichts. Die
+Basisdatei veröffentlicht darum gar nichts, und jede Umgebung legt selbst fest,
+was sichtbar sein soll.
+
 ### Reverse Proxy (nginx, Beispiel)
 
 ```nginx
