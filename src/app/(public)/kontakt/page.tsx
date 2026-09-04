@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Mail, MessageSquare, Building2 } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
@@ -59,12 +60,12 @@ export default async function ContactPage() {
                 Erfasse dein Anliegen direkt als Support-Ticket in deinem Dashboard. So siehst du
                 jederzeit den aktuellen Bearbeitungsstand.
               </p>
-              <a
+              <Link
                 href="/dashboard/tickets/neu"
                 className="mt-3 inline-block text-sm font-semibold text-primary-700 hover:underline"
               >
                 Ticket erstellen →
-              </a>
+              </Link>
             </Card>
 
             <Card className="p-5">
