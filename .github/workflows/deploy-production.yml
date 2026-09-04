@@ -136,6 +136,12 @@ jobs:
           git reset --hard origin/main
           echo "    Stand: $(git rev-parse --short HEAD) – $(git log -1 --pretty=%s)"
 
+          # Der Dienst "migrate" liegt im Profil "tools" und läuft nur auf
+          # Zuruf. Für Build und Migration wird das Profil aktiviert, danach
+          # wieder abgeschaltet, damit "up" ausschliesslich die dauerhaft
+          # laufenden Dienste startet.
+          export COMPOSE_PROFILES=tools
+
           echo "==> Images bauen"
           compose build --pull
 
@@ -143,11 +149,12 @@ jobs:
           compose up -d db
 
           echo "==> Migrationen anwenden"
-          # Die Prisma-CLI wird über ihren Pfad aufgerufen: Das Laufzeit-Image
-          # enthält node_modules/prisma, aber nicht node_modules/.bin, weshalb
-          # npx den lokalen Befehl nicht auflösen könnte.
-          compose run --rm -T app \
-            node node_modules/prisma/build/index.js migrate deploy
+          # Eigener Dienst mit vollständigen Abhängigkeiten. Das schlanke
+          # Laufzeit-Image kann die Prisma-CLI nicht ausführen; Begründung
+          # steht in docker-compose.yml.
+          compose run --rm -T migrate
+
+          unset COMPOSE_PROFILES
 
           echo "==> Container starten"
           compose up -d --remove-orphans

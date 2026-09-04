@@ -48,6 +48,38 @@ services:
     volumes:
       - uploads:/app/public/uploads
 
+  # Einmalige Datenbankbefehle: Migrationen und Seed.
+  #
+  # Dieser Dienst läuft nicht mit "up" mit, sondern nur auf Zuruf:
+  #   docker compose run --rm migrate                        # Migrationen
+  #   docker compose run --rm migrate npx tsx prisma/seed.ts # Seed
+  #
+  # Er verwendet bewusst die Build-Stufe statt des Laufzeit-Images: Letzteres
+  # enthält nur die Dateien, die zum Ausliefern der Anwendung nötig sind. Die
+  # Prisma-CLI lädt ihre Konfiguration über @prisma/config und benötigt dafür
+  # einen ganzen Baum weiterer Pakete (effect, c12 und deren Abhängigkeiten),
+  # der dort fehlt. Die Build-Stufe ist ohnehin Teil des Anwendungs-Builds;
+  # der Dienst kostet damit praktisch keine zusätzliche Bauzeit.
+  migrate:
+    build:
+      context: .
+      target: builder
+      args:
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+    profiles: ["tools"]
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["npx", "prisma", "migrate", "deploy"]
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-fasnav}:${POSTGRES_PASSWORD:-fasnav}@db:5432/${POSTGRES_DB:-fasnav}?schema=public
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-}
+      SEED_TEAM_EMAIL: ${SEED_TEAM_EMAIL:-}
+      SEED_TEAM_PASSWORD: ${SEED_TEAM_PASSWORD:-}
+      SEED_ORG_PASSWORD: ${SEED_ORG_PASSWORD:-}
+
 volumes:
   db_data:
   uploads:

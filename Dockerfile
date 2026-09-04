@@ -47,7 +47,10 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Für Migrationen und Seed im Container.
+# Schema und generierter Client. Migrationen laufen nicht hier, sondern im
+# Dienst "migrate" (siehe docker-compose.yml): Die Prisma-CLI benötigt einen
+# grossen Teil der Entwicklungsabhängigkeiten, den dieses Image bewusst nicht
+# mitbringt.
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma

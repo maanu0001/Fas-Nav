@@ -167,11 +167,15 @@ cp .env.example .env
 openssl rand -base64 32
 
 docker compose up -d --build
-docker compose exec app npx prisma migrate deploy
-docker compose exec app npx tsx prisma/seed.ts
+docker compose run --rm migrate                        # Migrationen anwenden
+docker compose run --rm migrate npx tsx prisma/seed.ts # Seed-Daten einspielen
 ```
 
 Anwendung: <http://localhost:3000>
+
+Datenbankbefehle laufen im Dienst `migrate` und nicht im Anwendungscontainer:
+Das Laufzeit-Image enthält nur, was zum Ausliefern der Anwendung nötig ist,
+und kann die Prisma-CLI deshalb nicht ausführen.
 
 ### Variante B – lokal
 
@@ -337,8 +341,12 @@ löschen würde.
 
 ```bash
 cp .env.example .env          # Produktionswerte eintragen
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
-docker compose exec app npx prisma migrate deploy
+
+COMPOSE="docker compose -f docker-compose.yml -f docker-compose.prod.yml"
+$COMPOSE build --pull
+$COMPOSE up -d db
+$COMPOSE run --rm migrate     # Migrationen anwenden
+$COMPOSE up -d
 ```
 
 In der Produktionskonfiguration ist die Datenbank nicht nach aussen
