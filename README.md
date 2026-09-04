@@ -64,6 +64,35 @@ Plattform-Einstellungen.
 **Live-Editor mit Vorschau**, Veranstaltungsverwaltung, Galerie, Statistik,
 Abonnement mit Rechnungshistorie, Tickets und Kontoeinstellungen.
 
+### Datenimport (Admin und Team)
+
+Recherchierte Fasnachten und Guggen lassen sich als JSON-Datei übernehmen –
+unter `/dashboard/import`, ausschliesslich für Admin und Team.
+
+Der Assistent führt in vier Schritten: Datei prüfen, Vorschau ansehen,
+Einstellungen wählen, importieren. Der Import startet nie unmittelbar nach dem
+Upload, sondern erst nach ausdrücklicher Bestätigung.
+
+Eigenschaften:
+
+* **Wiederholbar.** Jede Organisation trägt die `externalImportId` aus der
+  Recherchedatei. Ein erneuter Import derselben Datei erzeugt keine Duplikate,
+  sondern aktualisiert die vorhandenen Datensätze.
+* **Dublettenerkennung in sieben Stufen** – von der Importkennung über Slug,
+  Website und Name/Ort bis zu ähnlichen Namen. Eindeutige Treffer werden
+  aktualisiert, unsichere niemals automatisch zusammengeführt.
+* **Manuelle Bearbeitungen sind geschützt.** Wurde ein Feld von Hand geändert,
+  überschreibt ein späterer Import es nicht. Der Konflikt wird mit aktuellem
+  und Importwert angezeigt.
+* **Importierte Profile sind „nicht beansprucht“.** Es entsteht kein
+  Benutzerkonto; die öffentliche Seite kann trotzdem erscheinen.
+* **Echter Probelauf.** Die Simulation verwendet dieselbe Logik wie der
+  Import, schreibt aber nichts.
+* **Rückgängig machen** entfernt ausschliesslich Datensätze, die der Lauf neu
+  angelegt hat und die seither unverändert geblieben sind.
+* **Protokolliert.** Jeder Lauf wird mit Ergebnis je Datensatz gespeichert und
+  erscheint zusätzlich im Audit-Log.
+
 ### Querschnittsfunktionen
 
 Veröffentlichungszustände (`DRAFT`, `PENDING_REVIEW`, `PUBLISHED`,
@@ -396,6 +425,8 @@ src/components/
 src/lib/
   rbac.ts                  Rollen, Berechtigungen, Mandantentrennung
   claim-status.ts          Übernahmestatus im Einklang mit den Zuweisungen
+  import/                  Recherchedateien: Validierung, Mapping, Dubletten,
+                           Planung, Ausführung, Rollback, Feldherkunft
   validation/              Zod-Schemata
   queries/                 Wiederverwendbare Lesezugriffe
   subscription.ts          Tarif- und Feature-Logik
@@ -408,28 +439,31 @@ src/lib/
 
 ## Nächste Ausbauschritte
 
-1. **Feingranulare Zugriffsrechte.** `ORG_ROLE_CAPABILITIES` in
+1. **Bilder aus der Recherche übernehmen.** Logo- und Titelbild-URLs werden
+   gespeichert, aber bewusst nicht automatisch heruntergeladen. Ein geführter
+   Ablauf mit Rechteprüfung wäre der nächste Schritt.
+2. **Feingranulare Zugriffsrechte.** `ORG_ROLE_CAPABILITIES` in
    `src/lib/rbac.ts` bildet die Berechtigungen als Matrix ab und lässt sich um
    weitere Fähigkeiten oder Rollen erweitern, ohne aufrufenden Code zu ändern.
-2. **Zahlungsanbindung.** `Subscription` und `Payment` führen bereits
+3. **Zahlungsanbindung.** `Subscription` und `Payment` führen bereits
    `externalCustomerId`, `externalSubscriptionId` und `externalId`. Ein
    Stripe- oder Datatrans-Webhook lässt sich ohne Modelländerung ergänzen.
-3. **Automatisierte Ablauf-Erinnerungen.** Die Felder `expiringNotifiedAt` und
+4. **Automatisierte Ablauf-Erinnerungen.** Die Felder `expiringNotifiedAt` und
    `expiredNotifiedAt` sind vorhanden; es fehlt ein täglicher Cron-Job, der
    30 Tage vor Ablauf erinnert und danach in den eingeschränkten Modus schaltet.
-4. **Object Storage.** `StorageAdapter` in `src/lib/storage.ts` implementieren
+5. **Object Storage.** `StorageAdapter` in `src/lib/storage.ts` implementieren
    (S3 oder Cloudflare R2) und `STORAGE_DRIVER` umstellen.
-5. **Besucherkonten und Favoriten.** Modell `Favorite` und Rolle `VISITOR`
+6. **Besucherkonten und Favoriten.** Modell `Favorite` und Rolle `VISITOR`
    bestehen; es fehlen Registrierung und Oberfläche.
-6. **Volltextsuche.** Aktuell `ILIKE`-basiert. Für grössere Datenmengen bietet
+7. **Volltextsuche.** Aktuell `ILIKE`-basiert. Für grössere Datenmengen bietet
    sich ein PostgreSQL-`tsvector` mit deutschem Wörterbuch an.
-7. **Kartenansicht.** `latitude`/`longitude` sind im Modell vorhanden, die
+8. **Kartenansicht.** `latitude`/`longitude` sind im Modell vorhanden, die
    Agenda liesse sich um eine Kartendarstellung erweitern.
-8. **Mehrsprachigkeit.** Für die Romandie und das Tessin relevant; die
+9. **Mehrsprachigkeit.** Für die Romandie und das Tessin relevant; die
    Textbausteine sind bereits zentral gehalten.
-9. **Automatisierte Tests.** Die Berechtigungslogik in `src/lib/rbac.ts` und die
+10. **Automatisierte Tests.** Die Berechtigungslogik in `src/lib/rbac.ts` und die
    Abo-Limits in `src/lib/subscription.ts` sind die lohnendsten Kandidaten.
-10. **Feineres Rechtesystem.** `PERMISSIONS` ist als Matrix angelegt und lässt
+11. **Feineres Rechtesystem.** `PERMISSIONS` ist als Matrix angelegt und lässt
    sich zu granularen, pro Account vergebbaren Rechten ausbauen.
 
 ---

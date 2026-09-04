@@ -1,5 +1,6 @@
 import { handleApiError, jsonError, jsonOk } from "@/lib/api";
 import { logAudit } from "@/lib/audit";
+import { changedFieldNames, markManualEdits } from "@/lib/import/field-origin";
 import { prisma } from "@/lib/prisma";
 import { isStaff, requireOrgAccess, requirePermission } from "@/lib/rbac";
 import { uniqueOrganizationSlug } from "@/lib/slug-service";
@@ -29,19 +30,9 @@ export async function PATCH(request: Request, { params }: Params) {
       ? organizationAdminSchema.parse(raw)
       : {};
 
-    const before = await prisma.organization.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        status: true,
-        verification: true,
-        isFeatured: true,
-        claimStatus: true,
-        type: true,
-      },
-    });
+    // Vollständiger Datensatz, um erkennen zu können, welche Felder sich
+    // tatsächlich ändern (Grundlage für den Schutz vor Rechercheimporten).
+    const before = await prisma.organization.findUnique({ where: { id } });
     if (!before) return jsonError("Organisation nicht gefunden.", 404);
 
     // Referenzierte Medien müssen zur selben Organisation gehören.
@@ -87,6 +78,18 @@ export async function PATCH(request: Request, { params }: Params) {
       },
     });
 
+    // Manuell bearbeitete Felder vor späteren Rechercheimporten schützen.
+    const manuallyChanged = changedFieldNames(
+      before as unknown as Record<string, unknown>,
+      content as Record<string, unknown>,
+    );
+    await markManualEdits(
+      id,
+      manuallyChanged,
+      isStaff(access.user.role) ? "ADMIN_EDITED" : "ORGANIZATION_EDITED",
+      access.user.id,
+    );
+
     await logAudit({
       userId: access.user.id,
       userLabel: access.user.email,
@@ -94,7 +97,14 @@ export async function PATCH(request: Request, { params }: Params) {
       entity: "Organization",
       entityId: id,
       entityLabel: organization.name,
-      before,
+      before: {
+        name: before.name,
+        slug: before.slug,
+        status: before.status,
+        verification: before.verification,
+        isFeatured: before.isFeatured,
+        claimStatus: before.claimStatus,
+      },
       after: organization,
     });
 

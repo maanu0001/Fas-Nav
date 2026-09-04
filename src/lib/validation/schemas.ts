@@ -143,6 +143,30 @@ export const organizationContentSchema = z.object({
   memberCount: optionalInt(0, 5000),
   repertoire: optionalText(2000),
   musicStyle: optionalText(120),
+
+  // Aus der Recherche stammende Inhaltsfelder. Sie sind bewusst ebenfalls
+  // bearbeitbar: nur so lässt sich eine importierte Angabe von Hand
+  // korrigieren – und ist damit vor späteren Importen geschützt.
+  motto: optionalText(300),
+  catchmentArea: optionalText(300),
+  associationType: optionalText(160),
+  specialFeatures: z.array(safeText(300)).max(30).optional(),
+  performanceArea: optionalText(300),
+  homeCarnival: optionalText(200),
+  instrumentation: optionalText(2000),
+  knownAppearances: z.array(safeText(300)).max(50).optional(),
+  bookingInfo: optionalText(2000),
+  typicalPeriod: optionalText(200),
+  recurrence: optionalText(120),
+  organizerName: optionalText(200),
+  programHighlights: z.array(safeText(300)).max(30).optional(),
+  hasParade: z.boolean().nullable().optional(),
+  hasChildrensCarnival: z.boolean().nullable().optional(),
+  hasMaskedBall: z.boolean().nullable().optional(),
+  hasMonsterConcert: z.boolean().nullable().optional(),
+  hasSchnitzelbank: z.boolean().nullable().optional(),
+  hasBeizenfasnacht: z.boolean().nullable().optional(),
+
   logoId: optionalCuid,
   headerId: optionalCuid,
   ogImageId: optionalCuid,

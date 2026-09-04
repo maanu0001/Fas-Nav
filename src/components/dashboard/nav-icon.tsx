@@ -10,6 +10,7 @@ import {
   Settings,
   Ticket,
   TrendingUp,
+  Upload,
   Users,
   Wallet,
 } from "lucide-react";
@@ -26,6 +27,7 @@ const ICONS = {
   ticket: Ticket,
   megaphone: Megaphone,
   chart: TrendingUp,
+  upload: Upload,
   scroll: ScrollText,
   settings: Settings,
 } as const;

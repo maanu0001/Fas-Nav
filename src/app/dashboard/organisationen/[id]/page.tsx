@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { OrganizationEditor } from "@/components/dashboard/editor/organization-editor";
 import { OrganizationAdminPanel } from "@/components/dashboard/organization-admin-panel";
 import { OrganizationMembers } from "@/components/dashboard/access/organization-members";
+import { ResearchPanel } from "@/components/dashboard/import/research-panel";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { editorSelect, publicHrefFor, toEditorState } from "@/lib/editor-state";
 import { requireStaffPage } from "@/lib/dashboard-context";
@@ -35,6 +36,27 @@ export default async function AdminOrganizationPage({ params }: Params) {
         claimStatus: true,
         isFeatured: true,
         createdAt: true,
+        externalImportId: true,
+        importSource: true,
+        importedAt: true,
+        confidenceScore: true,
+        needsManualReview: true,
+        reviewReasons: true,
+        activityStatus: true,
+        lastActivityEvidence: true,
+        lastVerifiedAt: true,
+        dataNotes: true,
+        logoSourceUrl: true,
+        logoAssetUrl: true,
+        logoStatus: true,
+        headerSourceUrl: true,
+        headerAssetUrl: true,
+        headerStatus: true,
+        lastImportJob: { select: { id: true, reference: true } },
+        sources: {
+          orderBy: { createdAt: "asc" },
+          select: { id: true, url: true, type: true, title: true, accessedAt: true },
+        },
         subscription: {
           select: {
             id: true,
@@ -102,6 +124,10 @@ export default async function AdminOrganizationPage({ params }: Params) {
             : null
         }
       />
+
+      <div className="mt-6">
+        <ResearchPanel data={organization} />
+      </div>
 
       <div className="mt-6">
         <OrganizationMembers

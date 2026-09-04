@@ -226,6 +226,47 @@ enum HomepageSectionType {
   FAQ
 }
 
+/// Einschätzung, ob eine Organisation aktuell aktiv ist (aus der Recherche).
+enum ActivityStatus {
+  ACTIVE
+  LIKELY_ACTIVE
+  UNCERTAIN
+  INACTIVE
+  UNKNOWN
+}
+
+/// Herkunft eines einzelnen Feldwerts. Steuert, ob ein erneuter
+/// Rechercheimport den Wert überschreiben darf.
+enum FieldOriginType {
+  /// Zuletzt durch einen Import gesetzt – darf erneut importiert werden.
+  IMPORTED
+  /// Durch Admin oder Team bearbeitet – wird vor Importen geschützt.
+  ADMIN_EDITED
+  /// Durch die Organisation selbst bearbeitet – wird vor Importen geschützt.
+  ORGANIZATION_EDITED
+}
+
+enum ImportJobStatus {
+  /// Simulation ohne Schreibzugriff auf die produktiven Daten.
+  DRY_RUN
+  RUNNING
+  COMPLETED
+  COMPLETED_WITH_ERRORS
+  FAILED
+  ROLLED_BACK
+}
+
+/// Was mit einem einzelnen Datensatz der Importdatei geschehen ist bzw. würde.
+enum ImportRecordAction {
+  CREATE
+  UPDATE
+  SKIP
+  DUPLICATE
+  REVIEW
+  INVALID
+  FAILED
+}
+
 // ---------------------------------------------------------------------------
 // Benutzer & Zugriff
 // ---------------------------------------------------------------------------
@@ -256,6 +297,7 @@ model User {
   passwordResetTokens PasswordResetToken[]
   uploadedMedia       Media[]              @relation("MediaUploader")
   favorites           Favorite[]
+  importJobs          ImportJob[]
 
   @@index([role])
   @@index([isActive])
@@ -415,6 +457,61 @@ model Organization {
   memberCount  Int?
   repertoire   String? @db.Text
   musicStyle   String?
+  /// Einsatzgebiet der Gugge
+  performanceArea String?
+  /// Stammfasnacht
+  homeCarnival    String?
+  /// Besetzung
+  instrumentation String? @db.Text
+  /// Bekannte Auftritte
+  knownAppearances String[]
+  /// Kontakthinweis für Buchungen
+  bookingInfo     String? @db.Text
+
+  // Allgemeine Zusatzangaben aus der Recherche
+  /// Weitere gebräuchliche Namen – auch für die Dublettenerkennung genutzt.
+  alternativeNames String[]
+  motto            String?
+  catchmentArea    String?
+  associationType  String?
+  specialFeatures  String[]
+
+  // Fasnacht-spezifische Merkmale
+  typicalPeriod       String?
+  recurrence          String?
+  organizerName       String?
+  programHighlights   String[]
+  hasParade            Boolean?
+  hasChildrensCarnival Boolean?
+  hasMaskedBall        Boolean?
+  hasMonsterConcert    Boolean?
+  hasSchnitzelbank     Boolean?
+  hasBeizenfasnacht    Boolean?
+
+  // Herkunft und Qualität der Daten (nur intern sichtbar)
+  /// Stabile Kennung aus der Recherchedatei, z.B. CH-BS-CARNIVAL-BASEL-001.
+  /// Ermöglicht wiederholte Importe ohne Duplikate.
+  externalImportId  String?  @unique
+  importSource      String?
+  importedAt        DateTime?
+  lastImportJobId   String?
+  lastImportJob     ImportJob? @relation("OrganizationLastImport", fields: [lastImportJobId], references: [id], onDelete: SetNull)
+  confidenceScore   Int?
+  needsManualReview Boolean  @default(false)
+  reviewReasons     String[]
+  activityStatus    ActivityStatus?
+  lastActivityEvidence String? @db.Text
+  lastVerifiedAt    DateTime?
+  dataNotes         String?  @db.Text
+
+  // Bildquellen aus der Recherche. Assets werden bewusst nicht automatisch
+  // heruntergeladen; Admin entscheidet über die Übernahme.
+  logoSourceUrl   String?
+  logoAssetUrl    String?
+  logoStatus      String?
+  headerSourceUrl String?
+  headerAssetUrl  String?
+  headerStatus    String?
 
   // Zustände
   status             PublicationStatus  @default(DRAFT)
@@ -454,11 +551,17 @@ model Organization {
   claimRequests ClaimRequest[]
   favorites     Favorite[]
   notifications Notification[]
+  sources       OrganizationSource[]
+  fieldOrigins  FieldOrigin[]
+  importRecords ImportRecord[]
 
   @@index([type, status])
   @@index([cantonId])
   @@index([status])
   @@index([isFeatured])
+  @@index([externalImportId])
+  @@index([needsManualReview])
+  @@index([activityStatus])
   @@map("organizations")
 }
 
@@ -983,4 +1086,126 @@ model Favorite {
   @@unique([userId, organizationId])
   @@unique([userId, eventId])
   @@map("favorites")
+}
+
+// ---------------------------------------------------------------------------
+// Datenimport (Recherchedateien)
+// ---------------------------------------------------------------------------
+
+/// Belegquelle einer recherchierten Angabe. Dient der Nachvollziehbarkeit im
+/// Adminbereich und wird öffentlich nicht ausgegeben.
+model OrganizationSource {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  url            String
+  type           String?
+  title          String?
+  accessedAt     DateTime?
+  createdAt      DateTime     @default(now())
+
+  @@unique([organizationId, url])
+  @@index([organizationId])
+  @@map("organization_sources")
+}
+
+/// Herkunft eines einzelnen Feldwerts einer Organisation.
+///
+/// Nur Felder, die tatsächlich schon einmal gesetzt wurden, erhalten einen
+/// Eintrag. Fehlt der Eintrag, gilt das Feld als importierbar.
+model FieldOrigin {
+  id             String          @id @default(cuid())
+  organizationId String
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  /// Feldname im Organisationsmodell, z.B. "description".
+  field          String
+  origin         FieldOriginType
+  /// Wer die Änderung zuletzt vorgenommen hat (nur zur Anzeige).
+  changedById    String?
+  updatedAt      DateTime        @updatedAt
+  createdAt      DateTime        @default(now())
+
+  @@unique([organizationId, field])
+  @@index([organizationId])
+  @@map("field_origins")
+}
+
+/// Ein Import- oder Simulationslauf einer Recherchedatei.
+model ImportJob {
+  id          String          @id @default(cuid())
+  /// Menschenlesbare Nummer, z.B. IMP-2026-09-04-001.
+  reference   String          @unique
+  filename    String
+  fileSize    Int
+  /// Prüfsumme der Datei – erkennt erneute Uploads derselben Datei.
+  fileHash    String?
+  status      ImportJobStatus @default(RUNNING)
+  /// true, wenn es sich um eine reine Simulation handelt.
+  dryRun      Boolean         @default(false)
+
+  importedById String?
+  importedBy   User?          @relation(fields: [importedById], references: [id], onDelete: SetNull)
+  importedByLabel String?
+
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  totalRecords     Int @default(0)
+  createdRecords   Int @default(0)
+  updatedRecords   Int @default(0)
+  skippedRecords   Int @default(0)
+  failedRecords    Int @default(0)
+  duplicateRecords Int @default(0)
+  reviewRecords    Int @default(0)
+  invalidRecords   Int @default(0)
+  eventRecords     Int @default(0)
+
+  /// Gewählte Optionen und Kennzahlen der Datei (metadata-Block).
+  options  Json?
+  metadata Json?
+  /// Zusammenfassung eines Rückgängigmachens.
+  rollbackAt      DateTime?
+  rollbackById    String?
+  rollbackSummary Json?
+  errorMessage    String?  @db.Text
+
+  records              ImportRecord[]
+  organizationsLastSet Organization[] @relation("OrganizationLastImport")
+
+  @@index([status])
+  @@index([startedAt])
+  @@map("import_jobs")
+}
+
+/// Ergebnis für einen einzelnen Datensatz der Importdatei.
+model ImportRecord {
+  id       String             @id @default(cuid())
+  jobId    String
+  job      ImportJob          @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  action   ImportRecordAction
+
+  /// Kennung aus der Recherchedatei.
+  importId String
+  name     String
+  type     OrganizationType?
+  canton   String?
+  locality String?
+  confidenceScore Int?
+
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  /// true, wenn die Organisation durch genau diesen Lauf neu entstanden ist.
+  /// Grundlage für ein sicheres Rückgängigmachen.
+  createdByThisJob Boolean @default(false)
+
+  /// Verworfene Felder, geschützte Felder, Konflikte und Fehlermeldungen.
+  details Json?
+  message String? @db.Text
+
+  createdAt DateTime @default(now())
+
+  @@unique([jobId, importId])
+  @@index([jobId, action])
+  @@index([organizationId])
+  @@map("import_records")
 }

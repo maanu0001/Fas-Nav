@@ -6,7 +6,7 @@ import { Eye, Save, Send, Trash2, Plus } from "lucide-react";
 import { Alert } from "@/components/ui/alert";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Field, Input, Select, Textarea } from "@/components/ui/input";
+import { Checkbox, Field, Input, Select, Textarea } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/states";
 import { useToast } from "@/components/ui/toast";
 import { ImageUpload } from "@/components/dashboard/image-upload";
@@ -22,6 +22,7 @@ type Canton = { id: string; name: string; code: string };
 const SECTIONS = [
   { id: "grundinformationen", label: "Grundinformationen" },
   { id: "beschreibung", label: "Beschreibung" },
+  { id: "merkmale", label: "Merkmale" },
   { id: "bilder", label: "Bilder" },
   { id: "kontakt", label: "Kontakt" },
   { id: "social", label: "Social Media" },
@@ -143,6 +144,19 @@ export function OrganizationEditor({
           musicStyle: state.musicStyle || null,
           metaTitle: state.metaTitle || null,
           metaDesc: state.metaDesc || null,
+          motto: state.motto || null,
+          catchmentArea: state.catchmentArea || null,
+          associationType: state.associationType || null,
+          typicalPeriod: state.typicalPeriod || null,
+          organizerName: state.organizerName || null,
+          performanceArea: state.performanceArea || null,
+          homeCarnival: state.homeCarnival || null,
+          hasParade: state.hasParade,
+          hasChildrensCarnival: state.hasChildrensCarnival,
+          hasMaskedBall: state.hasMaskedBall,
+          hasMonsterConcert: state.hasMonsterConcert,
+          hasSchnitzelbank: state.hasSchnitzelbank,
+          hasBeizenfasnacht: state.hasBeizenfasnacht,
           logoId: state.logo?.id ?? null,
           headerId: state.header?.id ?? null,
         },
@@ -448,6 +462,116 @@ export function OrganizationEditor({
             </div>
           ) : null}
 
+          {section === "merkmale" ? (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Diese Angaben stammen teilweise aus recherchierten Daten. Sobald du sie hier
+                bearbeitest, werden sie von späteren Datenimporten nicht mehr überschrieben.
+              </p>
+
+              <Field label="Motto" htmlFor="motto" error={errors.motto}>
+                <Input
+                  id="motto"
+                  value={state.motto}
+                  onChange={(e) => set("motto", e.target.value)}
+                  maxLength={300}
+                />
+              </Field>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Einzugsgebiet" htmlFor="catchmentArea" error={errors.catchmentArea}>
+                  <Input
+                    id="catchmentArea"
+                    value={state.catchmentArea}
+                    onChange={(e) => set("catchmentArea", e.target.value)}
+                    maxLength={300}
+                  />
+                </Field>
+                <Field label="Vereinsform" htmlFor="associationType" error={errors.associationType}>
+                  <Input
+                    id="associationType"
+                    value={state.associationType}
+                    onChange={(e) => set("associationType", e.target.value)}
+                    maxLength={160}
+                  />
+                </Field>
+              </div>
+
+              {isCarnival ? (
+                <>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <Field
+                      label="Üblicher Zeitraum"
+                      htmlFor="typicalPeriod"
+                      error={errors.typicalPeriod}
+                      hint="z.B. Montag nach Aschermittwoch"
+                    >
+                      <Input
+                        id="typicalPeriod"
+                        value={state.typicalPeriod}
+                        onChange={(e) => set("typicalPeriod", e.target.value)}
+                        maxLength={200}
+                      />
+                    </Field>
+                    <Field label="Veranstalter" htmlFor="organizerName" error={errors.organizerName}>
+                      <Input
+                        id="organizerName"
+                        value={state.organizerName}
+                        onChange={(e) => set("organizerName", e.target.value)}
+                        maxLength={200}
+                      />
+                    </Field>
+                  </div>
+
+                  <fieldset>
+                    <legend className="mb-2 text-sm font-medium text-slate-700">
+                      Was gehört zu dieser Fasnacht?
+                    </legend>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {(
+                        [
+                          ["hasParade", "Umzug"],
+                          ["hasChildrensCarnival", "Kinderfasnacht"],
+                          ["hasMaskedBall", "Maskenball"],
+                          ["hasMonsterConcert", "Monsterkonzert"],
+                          ["hasSchnitzelbank", "Schnitzelbank"],
+                          ["hasBeizenfasnacht", "Beizenfasnacht"],
+                        ] as const
+                      ).map(([key, label]) => (
+                        <label key={key} className="flex items-center gap-2.5 text-sm text-slate-700">
+                          <Checkbox
+                            checked={state[key] === true}
+                            onChange={(e) => set(key, e.target.checked ? true : false)}
+                          />
+                          {label}
+                        </label>
+                      ))}
+                    </div>
+                  </fieldset>
+                </>
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field label="Einsatzgebiet" htmlFor="performanceArea" error={errors.performanceArea}>
+                    <Input
+                      id="performanceArea"
+                      value={state.performanceArea}
+                      onChange={(e) => set("performanceArea", e.target.value)}
+                      maxLength={300}
+                    />
+                  </Field>
+                  <Field label="Stammfasnacht" htmlFor="homeCarnival" error={errors.homeCarnival}>
+                    <Input
+                      id="homeCarnival"
+                      value={state.homeCarnival}
+                      onChange={(e) => set("homeCarnival", e.target.value)}
+                      maxLength={200}
+                    />
+                  </Field>
+                </div>
+              )}
+            </div>
+          ) : null}
+
           {section === "bilder" ? (
             <div className="grid gap-6 sm:grid-cols-2">
               <ImageUpload
@@ -728,6 +852,13 @@ const SECTION_BY_FIELD: Record<string, SectionId> = {
   history: "beschreibung",
   repertoire: "beschreibung",
   importantInfo: "beschreibung",
+  motto: "merkmale",
+  catchmentArea: "merkmale",
+  associationType: "merkmale",
+  typicalPeriod: "merkmale",
+  organizerName: "merkmale",
+  performanceArea: "merkmale",
+  homeCarnival: "merkmale",
   contactName: "kontakt",
   contactEmail: "kontakt",
   contactPhone: "kontakt",

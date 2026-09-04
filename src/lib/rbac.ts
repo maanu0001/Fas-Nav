@@ -43,6 +43,8 @@ export const PERMISSIONS = {
   viewAuditLog: (role: Role) => isStaff(role),
   viewPlatformStats: (role: Role) => isStaff(role),
   verifyOrganizations: (role: Role) => isStaff(role),
+  /** Recherchedateien analysieren, importieren und rückgängig machen. */
+  importData: (role: Role) => isStaff(role),
 } as const;
 
 export type PermissionKey = keyof typeof PERMISSIONS;

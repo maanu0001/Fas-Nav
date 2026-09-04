@@ -32,6 +32,7 @@ export function dashboardNavigation(role: Role): NavGroup[] {
           { href: "/dashboard/organisationen", label: "Organisationen", icon: "building" },
           { href: "/dashboard/agenda", label: "Agenda", icon: "calendar" },
           { href: "/dashboard/medien", label: "Medien", icon: "image" },
+          { href: "/dashboard/import", label: "Datenimport", icon: "upload" },
         ],
       },
       {

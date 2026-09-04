@@ -34,6 +34,20 @@ export type EditorState = {
   musicStyle: string;
   metaTitle: string;
   metaDesc: string;
+  // Aus der Recherche stammende Angaben, von Hand korrigierbar.
+  motto: string;
+  catchmentArea: string;
+  associationType: string;
+  typicalPeriod: string;
+  organizerName: string;
+  performanceArea: string;
+  homeCarnival: string;
+  hasParade: boolean | null;
+  hasChildrensCarnival: boolean | null;
+  hasMaskedBall: boolean | null;
+  hasMonsterConcert: boolean | null;
+  hasSchnitzelbank: boolean | null;
+  hasBeizenfasnacht: boolean | null;
   logo: UploadedMedia | null;
   header: UploadedMedia | null;
   socialLinks: SocialLinkDraft[];
