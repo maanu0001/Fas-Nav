@@ -107,6 +107,8 @@ jobs:
               -o StrictHostKeyChecking=yes \
               -o UserKnownHostsFile=~/.ssh/known_hosts \
               -o BatchMode=yes \
+              -o ServerAliveInterval=30 \
+              -o ServerAliveCountMax=20 \
               -p 22 \
               "$SSH_USER@$SSH_HOST" \
               'bash -s' <<'REMOTE' | tee /tmp/deploy.log
@@ -181,25 +183,38 @@ jobs:
             compose up -d --remove-orphans
 
             echo "==> Health-Check"
-            # Die Prüfung läuft im Container selbst. So ist sie unabhängig
-            # davon, welche Werkzeuge auf dem Host installiert sind, und trifft
-            # genau den Port, auf dem die Anwendung tatsächlich lauscht.
+            # Das Image bringt einen eigenen HEALTHCHECK auf /api/health mit.
+            # Statt bei jedem Versuch einen Prozess im Container zu starten,
+            # wird dessen Ergebnis abgefragt. Das ist deutlich günstiger und
+            # gibt bei jedem Versuch eine Zeile aus – die Verbindung bleibt
+            # damit auch über einen langsamen Start hinweg beschäftigt.
+            app_container="$(compose ps -q app)"
+            if [ -z "$app_container" ]; then
+              echo "Der Anwendungscontainer wurde nicht gestartet." >&2
+              compose ps
+              exit 1
+            fi
+
             ok=0
-            for attempt in $(seq 1 30); do
-              if compose exec -T app node -e \
-                "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))" \
-                >/dev/null 2>&1; then
+            for attempt in $(seq 1 40); do
+              status="$(docker inspect -f '{{.State.Health.Status}}' "$app_container" 2>/dev/null || echo unbekannt)"
+              running="$(docker inspect -f '{{.State.Status}}' "$app_container" 2>/dev/null || echo unbekannt)"
+              echo "    Versuch $attempt: Container $running, Health $status"
+              if [ "$status" = "healthy" ]; then
                 ok=1
-                echo "    Anwendung antwortet (Versuch $attempt)."
+                break
+              fi
+              if [ "$running" = "exited" ]; then
+                echo "Der Anwendungscontainer hat sich beendet." >&2
                 break
               fi
               sleep 5
             done
 
             if [ "$ok" -ne 1 ]; then
-              echo "Die Anwendung antwortet nach dem Deployment nicht." >&2
+              echo "Die Anwendung ist nach dem Deployment nicht betriebsbereit." >&2
               compose ps
-              compose logs --tail=80 app >&2
+              compose logs --tail=120 app >&2
               exit 1
             fi
 
