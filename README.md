@@ -276,15 +276,44 @@ vorherige Lauf beendet ist.
 
 | Secret | Zweck |
 | --- | --- |
-| `PRODUCTION_SSH_HOST` | Hostname oder IP des Produktionsservers |
-| `PRODUCTION_SSH_USER` | Benutzer für das Deployment |
-| `PRODUCTION_SSH_KEY` | Privater SSH-Schlüssel (vollständig, inklusive Kopf- und Fusszeile) |
-| `PRODUCTION_SSH_KNOWN_HOSTS` | Hostschlüssel des Servers, erzeugt mit `ssh-keyscan -p <port> <host>` |
-| `PRODUCTION_SSH_PORT` | Optional, Standard ist 22 |
+| `SERVER_HOST` | Hostname oder IP des Produktionsservers |
+| `SERVER_USER` | Benutzer für das Deployment |
+| `SERVER_SSH_KEY` | Privater SSH-Schlüssel (vollständig, inklusive Kopf- und Fusszeile) |
+| `PRODUCTION_SSH_KNOWN_HOSTS` | Öffentlicher Hostschlüssel des Servers |
 
-Der Hostschlüssel wird geprüft (`StrictHostKeyChecking=yes`). Ohne
-`PRODUCTION_SSH_KNOWN_HOSTS` bricht das Deployment mit einer klaren Meldung ab,
-statt die Prüfung stillschweigend zu umgehen.
+Der SSH-Port ist fest auf 22 gesetzt; dafür wird kein Secret benötigt.
+
+##### Wert für `PRODUCTION_SSH_KNOWN_HOSTS` erzeugen
+
+Der Workflow prüft den Hostschlüssel (`StrictHostKeyChecking=yes`) und weiss
+deshalb, mit welchem Server er spricht. Ohne dieses Secret bricht das
+Deployment mit einer klaren Meldung ab, statt die Prüfung stillschweigend zu
+umgehen.
+
+Den Wert auf einem Rechner erzeugen, der dem Server bereits vertraut – zum
+Beispiel dem eigenen Arbeitsrechner, von dem aus du dich schon per SSH
+verbindest:
+
+```bash
+ssh-keyscan fas-nav.ch          # Hostname oder IP wie in SERVER_HOST
+```
+
+Die vollständige Ausgabe (alle Zeilen, Kommentarzeilen mit `#` dürfen bleiben)
+wird unverändert als Secret hinterlegt. Sie enthält nur öffentliche
+Schlüssel – kein Geheimnis, aber sie muss aus vertrauenswürdiger Quelle
+stammen, sonst ist die Prüfung wertlos.
+
+Gegenprobe auf dem Server selbst, falls du sicher gehen willst:
+
+```bash
+ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub
+```
+
+Der Fingerabdruck muss mit dem übereinstimmen, den
+`ssh-keyscan <host> | ssh-keygen -lf -` lokal ausgibt.
+
+Ändert sich der Hostschlüssel des Servers – etwa nach einer Neuinstallation –,
+schlägt das Deployment fehl und das Secret muss neu erzeugt werden.
 
 Anwendungs-Secrets wie `AUTH_SECRET` oder `DATABASE_URL` gehören **nicht** zu
 diesen Secrets. Sie liegen ausschliesslich in der `.env` auf dem

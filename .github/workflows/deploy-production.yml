@@ -69,17 +69,17 @@ jobs:
     steps:
       - name: SSH-Zugang vorbereiten
         env:
-          SSH_KEY: ${{ secrets.PRODUCTION_SSH_KEY }}
+          SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
           SSH_KNOWN_HOSTS: ${{ secrets.PRODUCTION_SSH_KNOWN_HOSTS }}
         run: |
           set -euo pipefail
 
           if [ -z "${SSH_KEY:-}" ]; then
-            echo "::error::Secret PRODUCTION_SSH_KEY fehlt."
+            echo "::error::Secret SERVER_SSH_KEY fehlt."
             exit 1
           fi
           if [ -z "${SSH_KNOWN_HOSTS:-}" ]; then
-            echo "::error::Secret PRODUCTION_SSH_KNOWN_HOSTS fehlt. Erzeugen mit: ssh-keyscan -p <port> <host>"
+            echo "::error::Secret PRODUCTION_SSH_KNOWN_HOSTS fehlt. Auf einem vertrauenswuerdigen Rechner erzeugen mit: ssh-keyscan <host>"
             exit 1
           fi
 
@@ -93,14 +93,13 @@ jobs:
 
       - name: Deployment ausführen
         env:
-          SSH_HOST: ${{ secrets.PRODUCTION_SSH_HOST }}
-          SSH_USER: ${{ secrets.PRODUCTION_SSH_USER }}
-          SSH_PORT: ${{ secrets.PRODUCTION_SSH_PORT }}
+          SSH_HOST: ${{ secrets.SERVER_HOST }}
+          SSH_USER: ${{ secrets.SERVER_USER }}
         run: |
           set -euo pipefail
 
           if [ -z "${SSH_HOST:-}" ] || [ -z "${SSH_USER:-}" ]; then
-            echo "::error::Secrets PRODUCTION_SSH_HOST und PRODUCTION_SSH_USER werden benötigt."
+            echo "::error::Secrets SERVER_HOST und SERVER_USER werden benötigt."
             exit 1
           fi
 
@@ -108,7 +107,7 @@ jobs:
               -o StrictHostKeyChecking=yes \
               -o UserKnownHostsFile=~/.ssh/known_hosts \
               -o BatchMode=yes \
-              -p "${SSH_PORT:-22}" \
+              -p 22 \
               "$SSH_USER@$SSH_HOST" \
               'bash -s' <<'REMOTE'
           set -euo pipefail
