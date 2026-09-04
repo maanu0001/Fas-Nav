@@ -4,6 +4,7 @@ import { notify } from "@/lib/notifications";
 import { hashPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
 import { STAFF_ROLES, can, requirePermission } from "@/lib/rbac";
+import { syncClaimStatus } from "@/lib/claim-status";
 import { createUserSchema } from "@/lib/validation/schemas";
 
 export const dynamic = "force-dynamic";
@@ -74,12 +75,9 @@ export async function POST(request: Request) {
       select: { id: true, name: true, email: true, role: true, isActive: true },
     });
 
-    // Ein neu verknüpftes Profil gilt damit als übernommen.
+    // Ein Profil mit mindestens einem zugewiesenen Konto gilt als übernommen.
     if (body.organizationId) {
-      await prisma.organization.update({
-        where: { id: body.organizationId },
-        data: { claimStatus: "CLAIMED" },
-      });
+      await syncClaimStatus(prisma, body.organizationId);
     }
 
     await logAudit({
@@ -101,6 +99,46 @@ export async function POST(request: Request) {
     });
 
     return jsonOk(user, 201);
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
+
+
+/**
+ * Sucht Benutzerkonten für die Zuweisung zu einer Organisation.
+ *
+ * Bewusst auf Admin und Team beschränkt: Ein Organisationskonto soll nicht
+ * das Benutzerverzeichnis der Plattform durchsuchen können. Organisationen
+ * legen stattdessen ein neues Konto per E-Mail-Adresse an.
+ */
+export async function GET(request: Request) {
+  try {
+    await requirePermission("manageOrgAccounts");
+
+    const url = new URL(request.url);
+    const term = (url.searchParams.get("q") ?? "").trim().slice(0, 120);
+    const excludeOrganizationId = url.searchParams.get("excludeOrganizationId");
+
+    if (term.length < 2) return jsonOk({ users: [] });
+
+    const users = await prisma.user.findMany({
+      where: {
+        OR: [
+          { name: { contains: term, mode: "insensitive" } },
+          { email: { contains: term, mode: "insensitive" } },
+        ],
+        // Konten, die bereits Zugriff haben, werden ausgeblendet.
+        ...(excludeOrganizationId
+          ? { memberships: { none: { organizationId: excludeOrganizationId } } }
+          : {}),
+      },
+      orderBy: [{ isActive: "desc" }, { name: "asc" }],
+      take: 15,
+      select: { id: true, name: true, email: true, role: true, isActive: true },
+    });
+
+    return jsonOk({ users });
   } catch (error) {
     return handleApiError(error);
   }

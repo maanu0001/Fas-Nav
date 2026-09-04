@@ -194,10 +194,10 @@ export function AccountForm({
           {!userId ? (
             <>
               <Field
-                label="Organisation zuweisen"
+                label="Zugriff auf Organisation"
                 htmlFor="organizationId"
                 error={errors.organizationId}
-                hint="Nur für Fasnacht- und Guggenaccounts erforderlich."
+                hint="Kann auch leer bleiben – die Zuweisung lässt sich jederzeit später auf der Kontoseite oder der Organisationsseite ergänzen."
               >
                 <Select
                   id="organizationId"
@@ -206,7 +206,7 @@ export function AccountForm({
                     setValues((v) => ({ ...v, organizationId: e.target.value }))
                   }
                 >
-                  <option value="">Keine Organisation</option>
+                  <option value="">Vorerst ohne Organisation</option>
                   {organizations.map((org) => (
                     <option key={org.id} value={org.id}>
                       {org.name}
@@ -216,7 +216,11 @@ export function AccountForm({
               </Field>
 
               {values.organizationId ? (
-                <Field label="Rolle in der Organisation" htmlFor="membershipRole">
+                <Field
+                  label="Berechtigung in dieser Organisation"
+                  htmlFor="membershipRole"
+                  hint="Vollzugriff darf auch Benutzer und Zugriffe verwalten."
+                >
                   <Select
                     id="membershipRole"
                     value={values.membershipRole}

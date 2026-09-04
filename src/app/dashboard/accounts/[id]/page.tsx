@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { Card } from "@/components/ui/card";
 import { AccountForm } from "@/components/dashboard/account-form";
+import { UserOrganizations } from "@/components/dashboard/access/user-organizations";
 import { PageHeader } from "@/components/dashboard/page-header";
-import { MEMBERSHIP_ROLE_LABELS } from "@/lib/constants";
 import { formatDateTime } from "@/lib/dates";
 import { requirePermissionPage } from "@/lib/dashboard-context";
 import type { Role } from "@prisma/client";
@@ -39,11 +37,23 @@ export default async function AccountDetailPage({ params }: Params) {
         lastLoginAt: true,
         createdAt: true,
         memberships: {
+          orderBy: { createdAt: "asc" },
           select: {
             id: true,
             role: true,
             title: true,
-            organization: { select: { id: true, name: true, type: true } },
+            createdAt: true,
+            organization: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+                type: true,
+                city: true,
+                status: true,
+                claimStatus: true,
+              },
+            },
           },
         },
       },
@@ -80,32 +90,19 @@ export default async function AccountDetailPage({ params }: Params) {
         }}
       />
 
-      <Card className="mt-5 p-5">
-        <h2 className="mb-4 font-display text-base font-semibold">Zugeordnete Organisationen</h2>
-        {user.memberships.length ? (
-          <ul className="divide-y divide-border">
-            {user.memberships.map((membership) => (
-              <li key={membership.id} className="flex flex-wrap items-center gap-3 py-3">
-                <Link
-                  href={`/dashboard/organisationen/${membership.organization.id}`}
-                  className="min-w-0 flex-1 truncate text-sm font-medium text-primary-800 hover:underline"
-                >
-                  {membership.organization.name}
-                </Link>
-                <span className="text-sm text-muted-foreground">
-                  {MEMBERSHIP_ROLE_LABELS[membership.role]}
-                  {membership.title ? ` · ${membership.title}` : ""}
-                </span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            Diesem Konto ist keine Organisation zugewiesen. Die Zuweisung erfolgt über die
-            Organisationsseite.
-          </p>
-        )}
-      </Card>
+      <div className="mt-5">
+        <UserOrganizations
+          userId={user.id}
+          userName={user.name}
+          memberships={user.memberships.map((m) => ({
+            id: m.id,
+            role: m.role,
+            title: m.title,
+            createdAt: m.createdAt.toISOString(),
+            organization: m.organization,
+          }))}
+        />
+      </div>
     </>
   );
 }

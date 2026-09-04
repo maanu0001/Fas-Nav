@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { OrganizationEditor } from "@/components/dashboard/editor/organization-editor";
 import { OrganizationAdminPanel } from "@/components/dashboard/organization-admin-panel";
+import { OrganizationMembers } from "@/components/dashboard/access/organization-members";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { editorSelect, publicHrefFor, toEditorState } from "@/lib/editor-state";
 import { requireStaffPage } from "@/lib/dashboard-context";
@@ -57,10 +58,12 @@ export default async function AdminOrganizationPage({ params }: Params) {
     }),
     prisma.membership.findMany({
       where: { organizationId: id },
+      orderBy: [{ role: "asc" }, { createdAt: "asc" }],
       select: {
         id: true,
         role: true,
         title: true,
+        createdAt: true,
         user: { select: { id: true, name: true, email: true, isActive: true, lastLoginAt: true } },
       },
     }),
@@ -98,8 +101,26 @@ export default async function AdminOrganizationPage({ params }: Params) {
               }
             : null
         }
-        members={members}
       />
+
+      <div className="mt-6">
+        <OrganizationMembers
+          organizationId={organization.id}
+          organizationName={organization.name}
+          canManage
+          canSearchExisting
+          members={members.map((m) => ({
+            id: m.id,
+            role: m.role,
+            title: m.title,
+            createdAt: m.createdAt.toISOString(),
+            user: {
+              ...m.user,
+              lastLoginAt: m.user.lastLoginAt?.toISOString() ?? null,
+            },
+          }))}
+        />
+      </div>
 
       <div className="mt-8">
         <h2 className="mb-4 font-display text-lg font-bold">Inhalte bearbeiten</h2>

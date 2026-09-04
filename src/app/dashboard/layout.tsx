@@ -35,8 +35,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
     }),
   ]);
 
-  const org = context.organization;
-
   return (
     <DashboardShell
       navigation={dashboardNavigation(role)}
@@ -45,16 +43,22 @@ export default async function DashboardLayout({ children }: { children: React.Re
         email: context.user.email,
         roleLabel: ROLE_LABELS[role],
       }}
-      organization={
-        org
+      organizations={
+        context.organization
           ? {
-              name: org.name,
-              href: org.type === "CARNIVAL" ? `/fasnacht/${org.slug}` : `/gugge/${org.slug}`,
-              statusLabel:
-                PUBLICATION_STATUS_LABELS[
-                  org.status as keyof typeof PUBLICATION_STATUS_LABELS
-                ] ?? org.status,
-              published: org.status === "PUBLISHED",
+              activeId: context.organization.id,
+              items: context.organizations.map((org) => ({
+                id: org.id,
+                name: org.name,
+                slug: org.slug,
+                type: org.type,
+                membershipRole: org.membershipRole,
+                statusLabel:
+                  PUBLICATION_STATUS_LABELS[
+                    org.status as keyof typeof PUBLICATION_STATUS_LABELS
+                  ] ?? org.status,
+                published: org.status === "PUBLISHED",
+              })),
             }
           : null
       }

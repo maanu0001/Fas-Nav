@@ -2,7 +2,7 @@ import { handleApiError, jsonError, jsonOk, parseBody } from "@/lib/api";
 import { logAudit } from "@/lib/audit";
 import { notifyOrganization } from "@/lib/notifications";
 import { prisma } from "@/lib/prisma";
-import { isStaff, requireOrgAccess } from "@/lib/rbac";
+import { isStaff, requireOrganizationAccess, type OrgCapability } from "@/lib/rbac";
 import { uniqueEventSlug } from "@/lib/slug-service";
 import { eventUpdateSchema } from "@/lib/validation/schemas";
 
@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 type Params = { params: Promise<{ id: string }> };
 
 /** Lädt die Veranstaltung und prüft den Zugriff über ihre Organisation. */
-async function loadEvent(id: string, write: boolean) {
+async function loadEvent(id: string, capability: OrgCapability) {
   const event = await prisma.event.findUnique({
     where: { id },
     select: {
@@ -29,18 +29,24 @@ async function loadEvent(id: string, write: boolean) {
   if (!event) return null;
 
   // Die Organisation der Veranstaltung entscheidet über die Berechtigung.
-  const access = await requireOrgAccess(event.organizationId, { write });
+  const access = await requireOrganizationAccess(event.organizationId, capability);
   return { event, access };
 }
 
 export async function PATCH(request: Request, { params }: Params) {
   try {
     const { id } = await params;
-    const loaded = await loadEvent(id, true);
+    const loaded = await loadEvent(id, "edit");
     if (!loaded) return jsonError("Veranstaltung nicht gefunden.", 404);
 
     const { event, access } = loaded;
     const body = await parseBody(request, eventUpdateSchema);
+
+    // Der Wechsel des Veröffentlichungsstatus erfordert die weitergehende
+    // Berechtigung „Verwaltung“.
+    if (body.status && body.status !== event.status) {
+      await requireOrganizationAccess(event.organizationId, "manage");
+    }
 
     // Ein Statuswechsel auf SUSPENDED bleibt dem Fas-Nav-Team vorbehalten.
     if (body.status === "SUSPENDED" && !isStaff(access.user.role)) {
@@ -118,7 +124,7 @@ export async function PATCH(request: Request, { params }: Params) {
 export async function DELETE(_request: Request, { params }: Params) {
   try {
     const { id } = await params;
-    const loaded = await loadEvent(id, true);
+    const loaded = await loadEvent(id, "manage");
     if (!loaded) return jsonError("Veranstaltung nicht gefunden.", 404);
 
     const { event, access } = loaded;

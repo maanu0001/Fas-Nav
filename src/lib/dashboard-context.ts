@@ -1,29 +1,44 @@
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import type { Role } from "@prisma/client";
+import type { MembershipRole, OrganizationType, Role } from "@prisma/client";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { can, isAdmin, isStaff, type PermissionKey } from "@/lib/rbac";
+import {
+  can,
+  isAdmin,
+  isStaff,
+  type OrgCapability,
+  type PermissionKey,
+} from "@/lib/rbac";
 import { getSubscription, type SubscriptionWithPlan } from "@/lib/subscription";
+
+/** Name des Cookies, in dem die aktive Organisation gemerkt wird. */
+export const ACTIVE_ORG_COOKIE = "fasnav_org";
 
 export type DashboardOrganization = {
   id: string;
   name: string;
   slug: string;
-  type: "CARNIVAL" | "GUGGE";
+  type: OrganizationType;
   status: string;
   verification: string;
   claimStatus: string;
   onboardingCompleted: boolean;
-  membershipRole: string | null;
+  membershipRole: MembershipRole;
 };
 
 export type DashboardContext = {
   user: { id: string; name: string; email: string; role: string };
   staff: boolean;
+  /** Aktuell ausgewählte Organisation eines Organisationskontos. */
   organization: DashboardOrganization | null;
+  /** Alle Organisationen, auf die das Konto Zugriff hat. */
   organizations: DashboardOrganization[];
   subscription: SubscriptionWithPlan | null;
+  /** Fähigkeiten in der aktiven Organisation. */
+  capabilities: OrgCapability[];
+  can: (capability: OrgCapability) => boolean;
 };
 
 /**
@@ -66,9 +81,21 @@ export async function getDashboardContext(): Promise<DashboardContext> {
     membershipRole: m.role,
   }));
 
-  const organization = organizations[0] ?? null;
+  // Aktive Organisation aus dem Cookie – aber nur, wenn dafür tatsächlich
+  // eine Zuweisung besteht. Ein manipuliertes Cookie kann damit keinen
+  // Zugriff auf eine fremde Organisation herstellen.
+  const cookieStore = await cookies();
+  const preferredId = cookieStore.get(ACTIVE_ORG_COOKIE)?.value;
+  const organization =
+    organizations.find((org) => org.id === preferredId) ?? organizations[0] ?? null;
 
   const subscription = organization ? await getSubscription(organization.id) : null;
+
+  const capabilities: OrgCapability[] = staff
+    ? ["view", "edit", "manage", "manageMembers"]
+    : organization
+      ? ORG_CAPABILITIES_BY_ROLE[organization.membershipRole]
+      : [];
 
   return {
     user: {
@@ -81,8 +108,21 @@ export async function getDashboardContext(): Promise<DashboardContext> {
     organization,
     organizations,
     subscription,
+    capabilities,
+    can: (capability) => capabilities.includes(capability),
   };
 }
+
+/**
+ * Fähigkeiten je organisationsinterner Rolle.
+ * Spiegelt die verbindliche Definition in `src/lib/rbac.ts` für die
+ * Darstellung im Dashboard; durchgesetzt wird sie serverseitig dort.
+ */
+const ORG_CAPABILITIES_BY_ROLE: Record<MembershipRole, OrgCapability[]> = {
+  OWNER: ["view", "edit", "manage", "manageMembers"],
+  MANAGER: ["view", "edit", "manage"],
+  EDITOR: ["view", "edit"],
+};
 
 /**
  * Erzwingt eine zugeordnete Organisation.

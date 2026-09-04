@@ -4,12 +4,15 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { Bell, ExternalLink, LogOut, Menu, X } from "lucide-react";
+import { Bell, LogOut, Menu, X } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/ui/logo";
 import { NavIcon } from "@/components/dashboard/nav-icon";
+import {
+  OrganizationSwitcher,
+  type SwitcherOrganization,
+} from "@/components/dashboard/organization-switcher";
 import type { NavGroup } from "@/lib/navigation";
 import { cn, initials } from "@/lib/utils";
 
@@ -19,24 +22,22 @@ export type SidebarUser = {
   roleLabel: string;
 };
 
-export type SidebarOrganization = {
-  name: string;
-  href: string;
-  statusLabel: string;
-  published: boolean;
+export type SidebarOrganizations = {
+  items: SwitcherOrganization[];
+  activeId: string;
 } | null;
 
 export function DashboardShell({
   navigation,
   user,
-  organization,
+  organizations,
   unreadNotifications,
   openTickets,
   children,
 }: {
   navigation: NavGroup[];
   user: SidebarUser;
-  organization: SidebarOrganization;
+  organizations: SidebarOrganizations;
   unreadNotifications: number;
   openTickets: number;
   children: React.ReactNode;
@@ -99,24 +100,11 @@ export function DashboardShell({
         <Logo variant="light" href="/dashboard" />
       </div>
 
-      {organization ? (
-        <div className="mx-3 mt-4 rounded-lg bg-white/5 p-3">
-          <p className="truncate text-sm font-semibold text-white">{organization.name}</p>
-          <div className="mt-1.5 flex items-center gap-2">
-            <Badge variant={organization.published ? "success" : "warning"}>
-              {organization.statusLabel}
-            </Badge>
-          </div>
-          <Link
-            href={organization.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-2.5 inline-flex items-center gap-1.5 text-xs font-medium text-slate-300 transition-colors hover:text-white"
-          >
-            Vorschau öffnen
-            <ExternalLink className="h-3 w-3" aria-hidden />
-          </Link>
-        </div>
+      {organizations ? (
+        <OrganizationSwitcher
+          organizations={organizations.items}
+          activeId={organizations.activeId}
+        />
       ) : null}
 
       {nav}

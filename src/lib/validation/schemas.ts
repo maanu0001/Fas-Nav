@@ -57,7 +57,7 @@ export const changePasswordSchema = z
 // ---------------------------------------------------------------------------
 
 export const roleEnum = z.enum(["SUPERADMIN", "ADMIN", "TEAM", "FASNACHT", "GUGGE", "VISITOR"]);
-export const membershipRoleEnum = z.enum(["OWNER", "EDITOR", "VIEWER"]);
+export const membershipRoleEnum = z.enum(["OWNER", "MANAGER", "EDITOR"]);
 
 export const createUserSchema = z.object({
   name: requiredText(120, "Name"),
@@ -80,9 +80,25 @@ export const updateUserSchema = z.object({
 
 export const setUserPasswordSchema = z.object({ password });
 
-export const membershipSchema = z.object({
+/** Bestehendes Konto einer Organisation zuweisen. */
+export const membershipCreateSchema = z.object({
   userId: cuid,
-  organizationId: cuid,
+  role: membershipRoleEnum.default("EDITOR"),
+  title: optionalText(80),
+});
+
+/** Berechtigung einer bestehenden Zuweisung ändern. */
+export const membershipUpdateSchema = z.object({
+  role: membershipRoleEnum.optional(),
+  title: optionalText(80).optional(),
+});
+
+/** Neues Konto anlegen und der Organisation direkt zuweisen. */
+export const membershipInviteSchema = z.object({
+  name: requiredText(120, "Name"),
+  email,
+  password: password.optional(),
+  phone: optionalPhone,
   role: membershipRoleEnum.default("EDITOR"),
   title: optionalText(80),
 });

@@ -202,12 +202,19 @@ Vollständige Liste mit Kommentaren in `.env.example`.
 | --- | --- | --- |
 | Admin | `admin@fas-nav.ch` | `Fasnacht2027!` |
 | Team | `team@fas-nav.ch` | `Fasnacht2027!` |
-| Fasnacht (Inhaber) | `oltner-fasnacht@example.ch` | `Fasnacht2027!` |
-| Fasnacht (Bearbeiter) | `webmaster-olten@example.ch` | `Fasnacht2027!` |
-| Gugge (Inhaber) | `chesslete@example.ch` | `Fasnacht2027!` |
+| Fasnacht (Vollzugriff) | `oltner-fasnacht@example.ch` | `Fasnacht2027!` |
+| Zwei Organisationen | `webmaster-olten@example.ch` | `Fasnacht2027!` |
+| Gugge (Vollzugriff) | `chesslete@example.ch` | `Fasnacht2027!` |
 
-Die beiden Fasnachtskonten zeigen die Mehrbenutzerfähigkeit: beide verwalten
-dieselbe Organisation mit unterschiedlicher Membership-Rolle.
+Diese Konten zeigen beide Richtungen der Zuordnung:
+
+* **Oltner Fasnacht** hat zwei Konten (`oltner-fasnacht@…` mit Vollzugriff,
+  `webmaster-olten@…` mit Verwaltung).
+* **`webmaster-olten@…`** hat Zugriff auf **zwei** Organisationen – Verwaltung
+  bei der Oltner Fasnacht, Bearbeitung bei der Chesslete – und kann im
+  Dashboard zwischen beiden wechseln.
+* **Seebüebe Luzern** ist ein von Fas-Nav vorangelegtes Profil ohne Konto:
+  öffentlich sichtbar, Status „nicht beansprucht“.
 
 Der Seed legt ausserdem an: 26 Kantone, 11 Funktionen, 3 Tarife
 (Verzeichnis/Basis/Premium), Homepage-Sektionen, Plattform-Einstellungen,
@@ -281,15 +288,40 @@ pseudonyme Besucherzählung werten diesen Header aus.
 | `SUPERADMIN` | Wie Admin, für spätere Abstufungen vorgesehen |
 | `ADMIN` | Vollzugriff inklusive Team-Accounts, Tarifen und Einstellungen |
 | `TEAM` | Wie Admin, **ohne** Team-/Admin-Accounts, Tarife und Einstellungen |
-| `FASNACHT` | Ausschliesslich die zugewiesene Fasnacht |
-| `GUGGE` | Ausschliesslich die zugewiesene Gugge |
+| `FASNACHT` | Kontotyp Fasnacht – Zugriff nur über zugewiesene Organisationen |
+| `GUGGE` | Kontotyp Gugge – Zugriff nur über zugewiesene Organisationen |
 | `VISITOR` | Vorbereitet für Besucherkonten (Favoriten) |
 
-Innerhalb einer Organisation: `OWNER` (voll), `EDITOR` (bearbeiten),
-`VIEWER` (nur lesen).
+### Benutzerkonto und Organisation sind getrennt
 
-Die Matrix liegt in `src/lib/rbac.ts` (`PERMISSIONS`). Neue Berechtigungen
-werden dort ergänzt und über `requirePermission()` erzwungen.
+Ein Benutzerkonto ist ausschliesslich ein Login. Der Zugriff auf eine konkrete
+Fasnacht oder Gugge ergibt sich einzig aus einem Eintrag in `Membership`.
+Die globalen Rollen `FASNACHT` und `GUGGE` gewähren für sich genommen
+**keinerlei** Zugriff auf irgendeine Organisation – sie beschreiben nur die Art
+des Kontos.
+
+Daraus folgt:
+
+* Eine Organisation kann beliebig viele Konten haben (Präsidium, Marketing,
+  Webmaster …).
+* Ein Konto kann Zugriff auf beliebig viele Organisationen haben – mit
+  **unterschiedlicher** Berechtigung je Organisation.
+* Eine Organisation kann ganz ohne Konto existieren (Status
+  „nicht beansprucht“) und trotzdem öffentlich sichtbar sein.
+* Ein Konto zu deaktivieren berührt weder die Organisation noch deren
+  öffentliche Seite – und umgekehrt.
+
+### Berechtigungen innerhalb einer Organisation
+
+| Berechtigung | Inhalte bearbeiten | Veröffentlichen | Benutzer und Zugriffe |
+| --- | :---: | :---: | :---: |
+| `OWNER` (Vollzugriff) | ✓ | ✓ | ✓ |
+| `MANAGER` (Verwaltung) | ✓ | ✓ | – |
+| `EDITOR` (Bearbeitung) | ✓ | – | – |
+
+Die Matrix der globalen Rechte liegt in `src/lib/rbac.ts` (`PERMISSIONS`), die
+der organisationsinternen in `ORG_ROLE_CAPABILITIES`. Neue Fähigkeiten werden
+ausschliesslich dort ergänzt.
 
 ---
 
@@ -298,11 +330,16 @@ werden dort ergänzt und über `requirePermission()` erzwungen.
 * **Serverseitige Rechteprüfung.** Jeder schreibende Endpoint prüft
   Authentifizierung und Berechtigung, bevor er Daten anfasst. Die
   Frontend-Navigation blendet lediglich zusätzlich aus.
-* **Mandantentrennung.** `requireOrgAccess()` ist der einzige Weg zu
-  organisationsgebundenen Daten. Eine manipulierte Organisations-ID im Request
-  führt zu `403`, niemals zu Zugriff auf fremde Daten. Unterressourcen
-  (Events, Medien, Sponsoren, Programm, FAQ) werden zusätzlich gegen ihre
-  Organisation geprüft.
+* **Mandantentrennung.** `requireOrganizationAccess(id, capability)` ist der
+  einzige Weg zu organisationsgebundenen Daten. Der Zugriff wird ausschliesslich
+  über die Membership hergeleitet – die globale Rolle eines Organisationskontos
+  spielt dabei keine Rolle. Eine manipulierte Organisations-ID im Request führt
+  zu `403`, niemals zu Zugriff auf fremde Daten. Unterressourcen (Events,
+  Medien, Sponsoren, Programm, FAQ) sowie Zuweisungen werden zusätzlich gegen
+  ihre Organisation geprüft; eine fremde Zuweisungs-ID ergibt `404`.
+  Auch die aktive Organisation aus dem Cookie wird bei jeder Anfrage erneut
+  gegen die Memberships geprüft und ist niemals selbst Grundlage einer
+  Berechtigung.
 * **Keine Rechteeskalation.** Statusfelder wie `verification`, `isFeatured`,
   `slug` und `claimStatus` werden aus Anfragen von Organisationsaccounts
   verworfen. `TEAM` kann keine Team- oder Adminkonten anlegen oder bearbeiten.
@@ -358,6 +395,7 @@ src/components/
 
 src/lib/
   rbac.ts                  Rollen, Berechtigungen, Mandantentrennung
+  claim-status.ts          Übernahmestatus im Einklang mit den Zuweisungen
   validation/              Zod-Schemata
   queries/                 Wiederverwendbare Lesezugriffe
   subscription.ts          Tarif- und Feature-Logik
@@ -370,25 +408,28 @@ src/lib/
 
 ## Nächste Ausbauschritte
 
-1. **Zahlungsanbindung.** `Subscription` und `Payment` führen bereits
+1. **Feingranulare Zugriffsrechte.** `ORG_ROLE_CAPABILITIES` in
+   `src/lib/rbac.ts` bildet die Berechtigungen als Matrix ab und lässt sich um
+   weitere Fähigkeiten oder Rollen erweitern, ohne aufrufenden Code zu ändern.
+2. **Zahlungsanbindung.** `Subscription` und `Payment` führen bereits
    `externalCustomerId`, `externalSubscriptionId` und `externalId`. Ein
    Stripe- oder Datatrans-Webhook lässt sich ohne Modelländerung ergänzen.
-2. **Automatisierte Ablauf-Erinnerungen.** Die Felder `expiringNotifiedAt` und
+3. **Automatisierte Ablauf-Erinnerungen.** Die Felder `expiringNotifiedAt` und
    `expiredNotifiedAt` sind vorhanden; es fehlt ein täglicher Cron-Job, der
    30 Tage vor Ablauf erinnert und danach in den eingeschränkten Modus schaltet.
-3. **Object Storage.** `StorageAdapter` in `src/lib/storage.ts` implementieren
+4. **Object Storage.** `StorageAdapter` in `src/lib/storage.ts` implementieren
    (S3 oder Cloudflare R2) und `STORAGE_DRIVER` umstellen.
-4. **Besucherkonten und Favoriten.** Modell `Favorite` und Rolle `VISITOR`
+5. **Besucherkonten und Favoriten.** Modell `Favorite` und Rolle `VISITOR`
    bestehen; es fehlen Registrierung und Oberfläche.
-5. **Volltextsuche.** Aktuell `ILIKE`-basiert. Für grössere Datenmengen bietet
+6. **Volltextsuche.** Aktuell `ILIKE`-basiert. Für grössere Datenmengen bietet
    sich ein PostgreSQL-`tsvector` mit deutschem Wörterbuch an.
-6. **Kartenansicht.** `latitude`/`longitude` sind im Modell vorhanden, die
+7. **Kartenansicht.** `latitude`/`longitude` sind im Modell vorhanden, die
    Agenda liesse sich um eine Kartendarstellung erweitern.
-7. **Mehrsprachigkeit.** Für die Romandie und das Tessin relevant; die
+8. **Mehrsprachigkeit.** Für die Romandie und das Tessin relevant; die
    Textbausteine sind bereits zentral gehalten.
-8. **Automatisierte Tests.** Die Berechtigungslogik in `src/lib/rbac.ts` und die
+9. **Automatisierte Tests.** Die Berechtigungslogik in `src/lib/rbac.ts` und die
    Abo-Limits in `src/lib/subscription.ts` sind die lohnendsten Kandidaten.
-9. **Feineres Rechtesystem.** `PERMISSIONS` ist als Matrix angelegt und lässt
+10. **Feineres Rechtesystem.** `PERMISSIONS` ist als Matrix angelegt und lässt
    sich zu granularen, pro Account vergebbaren Rechten ausbauen.
 
 ---

@@ -99,35 +99,105 @@ export async function requirePermission(permission: PermissionKey): Promise<Sess
   return user;
 }
 
+// ---------------------------------------------------------------------------
+// Organisationszugriff
+//
+// Ein Benutzerkonto ist ausschliesslich ein Login. Der Zugriff auf eine
+// konkrete Fasnacht oder Gugge ergibt sich einzig aus einer Membership.
+// Die globalen Rollen FASNACHT und GUGGE gewähren für sich genommen
+// keinerlei Zugriff auf irgendeine Organisation.
+//
+// ADMIN, TEAM und SUPERADMIN besitzen plattformweiten Zugriff und benötigen
+// dafür keine Membership.
+// ---------------------------------------------------------------------------
+
+/** Was innerhalb einer Organisation getan werden darf. */
+export type OrgCapability =
+  /** Daten der Organisation lesen. */
+  | "view"
+  /** Inhalte, Veranstaltungen und Medien bearbeiten. */
+  | "edit"
+  /** Veröffentlichen, Abo-relevante Einstellungen, Sponsoren, Downloads. */
+  | "manage"
+  /** Benutzer und deren Zugriffe auf diese Organisation verwalten. */
+  | "manageMembers";
+
+/**
+ * Rechte je organisationsinterner Rolle.
+ * Neue Rollen oder Fähigkeiten werden ausschliesslich hier ergänzt.
+ */
+const ORG_ROLE_CAPABILITIES: Record<MembershipRole, OrgCapability[]> = {
+  OWNER: ["view", "edit", "manage", "manageMembers"],
+  MANAGER: ["view", "edit", "manage"],
+  EDITOR: ["view", "edit"],
+};
+
+/** Prüft eine Fähigkeit gegen eine organisationsinterne Rolle. */
+export function membershipRoleAllows(
+  role: MembershipRole,
+  capability: OrgCapability,
+): boolean {
+  return ORG_ROLE_CAPABILITIES[role].includes(capability);
+}
+
 export type OrgAccess = {
   user: SessionUser;
   organizationId: string;
-  /** true, wenn der Zugriff über eine Plattformrolle erfolgt. */
+  /** true, wenn der Zugriff über eine Plattformrolle (ADMIN/TEAM) erfolgt. */
   viaStaff: boolean;
+  /** Organisationsinterne Rolle; null bei Zugriff über eine Plattformrolle. */
   membershipRole: MembershipRole | null;
+  /** Tatsächlich verfügbare Fähigkeiten in dieser Organisation. */
+  capabilities: OrgCapability[];
+  can: (capability: OrgCapability) => boolean;
 };
 
+/** Ergebnis einer Zugriffsprüfung ohne Ausnahme. */
+export type OrgAccessResult =
+  | { ok: true; access: OrgAccess }
+  | { ok: false; status: 401 | 403 | 404; message: string };
+
 /**
- * Kernstück der Mandantentrennung: Prüft, ob der angemeldete Benutzer
- * die angegebene Organisation bearbeiten darf.
- *
- * Ein FASNACHT- oder GUGGE-Account erhält Zugriff ausschliesslich über eine
- * Membership. Manipulierte IDs im Request führen zu 403 – niemals zu Zugriff
- * auf eine fremde Organisation.
+ * Ermittelt den Zugriff eines Benutzers auf eine Organisation, ohne eine
+ * Ausnahme zu werfen. Grundlage aller weiteren Prüffunktionen.
  */
-export async function requireOrgAccess(
+export async function resolveOrganizationAccess(
   organizationId: string,
-  options: { write?: boolean } = {},
-): Promise<OrgAccess> {
-  const user = await requireUser();
+  capability: OrgCapability = "view",
+): Promise<OrgAccessResult> {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return { ok: false, status: 401, message: "Nicht angemeldet." };
+  }
+  if (!session.user.isActive) {
+    // Ein deaktiviertes Konto verliert den Zugriff, ohne dass Organisation
+    // oder öffentliche Seite davon berührt werden.
+    return { ok: false, status: 403, message: "Dieses Konto ist deaktiviert." };
+  }
+
+  const user = session.user;
 
   if (isStaff(user.role)) {
-    const org = await prisma.organization.findUnique({
+    const organization = await prisma.organization.findUnique({
       where: { id: organizationId },
       select: { id: true },
     });
-    if (!org) throw new AuthError("Organisation nicht gefunden.", 404);
-    return { user, organizationId: org.id, viaStaff: true, membershipRole: null };
+    if (!organization) {
+      return { ok: false, status: 404, message: "Organisation nicht gefunden." };
+    }
+    const capabilities: OrgCapability[] = ["view", "edit", "manage", "manageMembers"];
+    return {
+      ok: true,
+      access: {
+        user,
+        organizationId: organization.id,
+        viaStaff: true,
+        membershipRole: null,
+        capabilities,
+        can: (c) => capabilities.includes(c),
+      },
+    };
   }
 
   const membership = await prisma.membership.findUnique({
@@ -135,20 +205,84 @@ export async function requireOrgAccess(
     select: { role: true },
   });
 
+  // Ohne Membership besteht kein Zugriff – unabhängig von der globalen Rolle.
   if (!membership) {
-    throw new AuthError("Keine Berechtigung für diese Organisation.", 403);
+    return {
+      ok: false,
+      status: 403,
+      message: "Keine Berechtigung für diese Organisation.",
+    };
   }
 
-  if (options.write && membership.role === "VIEWER") {
-    throw new AuthError("Nur Lesezugriff auf diese Organisation.", 403);
+  const capabilities = ORG_ROLE_CAPABILITIES[membership.role];
+
+  if (!capabilities.includes(capability)) {
+    return {
+      ok: false,
+      status: 403,
+      message: "Deine Berechtigung reicht für diese Aktion nicht aus.",
+    };
   }
 
   return {
-    user,
-    organizationId,
-    viaStaff: false,
-    membershipRole: membership.role,
+    ok: true,
+    access: {
+      user,
+      organizationId,
+      viaStaff: false,
+      membershipRole: membership.role,
+      capabilities,
+      can: (c) => capabilities.includes(c),
+    },
   };
+}
+
+/** Darf der Benutzer die Organisation überhaupt sehen? */
+export async function canAccessOrganization(organizationId: string): Promise<boolean> {
+  return (await resolveOrganizationAccess(organizationId, "view")).ok;
+}
+
+/** Darf der Benutzer Inhalte dieser Organisation bearbeiten? */
+export async function canEditOrganization(organizationId: string): Promise<boolean> {
+  return (await resolveOrganizationAccess(organizationId, "edit")).ok;
+}
+
+/** Darf der Benutzer veröffentlichen und organisatorische Einstellungen ändern? */
+export async function canManageOrganization(organizationId: string): Promise<boolean> {
+  return (await resolveOrganizationAccess(organizationId, "manage")).ok;
+}
+
+/** Darf der Benutzer Zugriffe anderer Benutzer auf diese Organisation verwalten? */
+export async function canManageOrganizationMembers(
+  organizationId: string,
+): Promise<boolean> {
+  return (await resolveOrganizationAccess(organizationId, "manageMembers")).ok;
+}
+
+/**
+ * Erzwingt Zugriff auf eine Organisation und wirft andernfalls.
+ * Einziger zulässiger Weg zu organisationsgebundenen Daten.
+ */
+export async function requireOrganizationAccess(
+  organizationId: string,
+  capability: OrgCapability = "view",
+): Promise<OrgAccess> {
+  const result = await resolveOrganizationAccess(organizationId, capability);
+  if (!result.ok) {
+    throw new AuthError(result.message, result.status);
+  }
+  return result.access;
+}
+
+/**
+ * Bisherige Signatur, auf die neue Prüfung abgebildet.
+ * `write: true` entspricht der Fähigkeit „edit“.
+ */
+export async function requireOrgAccess(
+  organizationId: string,
+  options: { write?: boolean } = {},
+): Promise<OrgAccess> {
+  return requireOrganizationAccess(organizationId, options.write ? "edit" : "view");
 }
 
 /** Alle Organisationen, auf die der Benutzer Zugriff hat. */

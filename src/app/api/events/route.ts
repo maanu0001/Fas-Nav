@@ -2,7 +2,7 @@ import { handleApiError, jsonError, jsonOk, parseBody } from "@/lib/api";
 import { logAudit } from "@/lib/audit";
 import { FEATURE_KEYS } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
-import { requireOrgAccess, requireUser } from "@/lib/rbac";
+import { requireOrganizationAccess, requireUser } from "@/lib/rbac";
 import { uniqueEventSlug } from "@/lib/slug-service";
 import { getSubscription, withinLimit } from "@/lib/subscription";
 import { eventCreateSchema } from "@/lib/validation/schemas";
@@ -21,7 +21,11 @@ export async function POST(request: Request) {
     await requireUser();
 
     const body = await parseBody(request, eventCreateSchema);
-    const access = await requireOrgAccess(body.organizationId, { write: true });
+    const access = await requireOrganizationAccess(
+      body.organizationId,
+      // Ein direkt veröffentlichter Termin ist öffentlich wirksam.
+      body.status === "PUBLISHED" ? "manage" : "edit",
+    );
 
     // Anzahl Veranstaltungen ist tarifabhängig.
     if (!access.viaStaff) {

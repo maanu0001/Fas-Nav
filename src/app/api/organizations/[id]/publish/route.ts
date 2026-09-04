@@ -2,7 +2,7 @@ import { handleApiError, jsonError, jsonOk, parseBody } from "@/lib/api";
 import { logAudit } from "@/lib/audit";
 import { notifyOrganization } from "@/lib/notifications";
 import { prisma } from "@/lib/prisma";
-import { isStaff, requireOrgAccess } from "@/lib/rbac";
+import { isStaff, requireOrganizationAccess } from "@/lib/rbac";
 import { publishSchema } from "@/lib/validation/schemas";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +20,9 @@ const SELF_ALLOWED = new Set(["DRAFT", "PENDING_REVIEW", "PUBLISHED", "UNPUBLISH
 export async function POST(request: Request, { params }: Params) {
   try {
     const { id } = await params;
-    const access = await requireOrgAccess(id, { write: true });
+    // Veröffentlichen ist eine organisatorische Handlung: nur OWNER und
+    // MANAGER (sowie Admin/Team) dürfen den Status ändern.
+    const access = await requireOrganizationAccess(id, "manage");
     const { status } = await parseBody(request, publishSchema);
 
     const before = await prisma.organization.findUnique({

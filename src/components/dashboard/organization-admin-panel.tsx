@@ -1,27 +1,20 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { BadgeCheck, Save, Sparkles, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/dialog";
 import { Checkbox, Field, Input, Select } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/states";
 import { useToast } from "@/components/ui/toast";
-import {
-  CLAIM_STATUS_LABELS,
-  MEMBERSHIP_ROLE_LABELS,
-  SUBSCRIPTION_STATUS_LABELS,
-} from "@/lib/constants";
+import { CLAIM_STATUS_LABELS, SUBSCRIPTION_STATUS_LABELS } from "@/lib/constants";
 import { apiRequest, errorMessage } from "@/lib/client-api";
 import { formatDateShort, toDateInputValue } from "@/lib/dates";
 import type {
   ClaimStatus,
-  MembershipRole,
   PublicationStatus,
   SubscriptionStatus,
   VerificationStatus,
@@ -41,19 +34,6 @@ type Subscription = {
   plan: { name: string };
 } | null;
 
-type Member = {
-  id: string;
-  role: MembershipRole;
-  title: string | null;
-  user: {
-    id: string;
-    name: string;
-    email: string;
-    isActive: boolean;
-    lastLoginAt: Date | null;
-  };
-};
-
 /**
  * Verwaltungsbereich, der ausschliesslich Admin und Team angezeigt wird.
  * Die entsprechenden Endpoints prüfen die Rolle zusätzlich serverseitig.
@@ -67,7 +47,6 @@ export function OrganizationAdminPanel({
   isFeatured,
   plans,
   subscription,
-  members,
 }: {
   organizationId: string;
   slug: string;
@@ -77,7 +56,6 @@ export function OrganizationAdminPanel({
   isFeatured: boolean;
   plans: Plan[];
   subscription: Subscription;
-  members: Member[];
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -361,60 +339,6 @@ export function OrganizationAdminPanel({
             Abonnement speichern
           </Button>
         </div>
-      </Card>
-
-      <Card className="p-5 lg:col-span-2">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <h2 className="font-display text-base font-semibold">
-            Zugeordnete Accounts ({members.length})
-          </h2>
-          <Link
-            href={`/dashboard/accounts/neu?organizationId=${organizationId}`}
-            className="text-sm text-primary-700 hover:underline"
-          >
-            Account hinzufügen
-          </Link>
-        </div>
-
-        {members.length ? (
-          <ul className="divide-y divide-border">
-            {members.map((member) => (
-              <li key={member.id} className="flex flex-wrap items-center gap-3 py-3">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-primary-900">
-                    {member.user.name}
-                    {member.title ? (
-                      <span className="ml-1.5 text-xs font-normal text-muted-foreground">
-                        {member.title}
-                      </span>
-                    ) : null}
-                  </p>
-                  <p className="truncate text-xs text-muted-foreground">{member.user.email}</p>
-                </div>
-                <Badge variant="secondary">{MEMBERSHIP_ROLE_LABELS[member.role]}</Badge>
-                <Badge variant={member.user.isActive ? "success" : "muted"}>
-                  {member.user.isActive ? "Aktiv" : "Inaktiv"}
-                </Badge>
-                <span className="text-xs text-muted-foreground">
-                  {member.user.lastLoginAt
-                    ? `zuletzt ${formatDateShort(member.user.lastLoginAt)}`
-                    : "noch nie angemeldet"}
-                </span>
-                <Link
-                  href={`/dashboard/accounts/${member.user.id}`}
-                  className="text-sm text-primary-700 hover:underline"
-                >
-                  Bearbeiten
-                </Link>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            Dieser Organisation ist noch kein Account zugeordnet. Das Profil gilt damit als nicht
-            beansprucht.
-          </p>
-        )}
       </Card>
 
       <ConfirmDialog

@@ -27,8 +27,10 @@ export default async function MyPageEditor() {
 
   if (!organization) notFound();
 
-  // Nur Leserechte bedeuten: kein Bearbeiten und kein Veröffentlichen.
-  const readOnly = context.organization.membershipRole === "VIEWER";
+  // Bearbeiten und Veröffentlichen richten sich nach der Berechtigung
+  // innerhalb dieser Organisation.
+  const canEdit = context.can("edit");
+  const canPublish = context.can("manage");
 
   return (
     <>
@@ -37,9 +39,10 @@ export default async function MyPageEditor() {
         description="Bearbeite die Inhalte deiner öffentlichen Profilseite. Änderungen siehst du sofort in der Vorschau."
       />
 
-      {readOnly ? (
-        <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          Dein Konto hat nur Leserechte für diese Organisation.
+      {canEdit && !canPublish ? (
+        <p className="mb-4 rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
+          Du kannst Inhalte bearbeiten. Das Veröffentlichen übernimmt eine Person mit der
+          Berechtigung „Verwaltung“ oder „Vollzugriff“.
         </p>
       ) : null}
 
@@ -50,7 +53,7 @@ export default async function MyPageEditor() {
         publicHref={publicHrefFor(organization)}
         cantons={cantons}
         initial={toEditorState(organization)}
-        canPublish={!readOnly}
+        canPublish={canPublish}
       />
     </>
   );

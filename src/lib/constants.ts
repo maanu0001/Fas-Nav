@@ -109,10 +109,18 @@ export const ROLE_LABELS: Record<Role, string> = {
   VISITOR: "Besucher",
 };
 
+/** Bezeichnungen der organisationsinternen Berechtigungen. */
 export const MEMBERSHIP_ROLE_LABELS: Record<MembershipRole, string> = {
-  OWNER: "Inhaber",
-  EDITOR: "Bearbeiter",
-  VIEWER: "Leser",
+  OWNER: "Vollzugriff",
+  MANAGER: "Verwaltung",
+  EDITOR: "Bearbeitung",
+};
+
+/** Kurzerklärung je Berechtigung – wird in der Oberfläche angezeigt. */
+export const MEMBERSHIP_ROLE_DESCRIPTIONS: Record<MembershipRole, string> = {
+  OWNER: "Darf alles verwalten, auch Benutzer und deren Zugriffe.",
+  MANAGER: "Darf Inhalte, Veranstaltungen und Medien verwalten sowie veröffentlichen.",
+  EDITOR: "Darf Inhalte und Veranstaltungen bearbeiten, aber nicht veröffentlichen.",
 };
 
 export const SUBSCRIPTION_STATUS_LABELS: Record<SubscriptionStatus, string> = {

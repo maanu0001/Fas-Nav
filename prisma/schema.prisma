@@ -51,10 +51,15 @@ enum ClaimStatus {
   CLAIMED
 }
 
+/// Organisationsinterne Rolle. Sie gilt ausschliesslich für die jeweilige
+/// Organisation und ist unabhängig von der globalen Rolle des Benutzers.
 enum MembershipRole {
+  /// Vollständige Verwaltung der eigenen Organisation inklusive Zugriffen.
   OWNER
+  /// Inhalte, Veranstaltungen und Medien verwalten – keine Zugriffsverwaltung.
+  MANAGER
+  /// Inhalte bearbeiten – keine Zugriffs- und keine Veröffentlichungsverwaltung.
   EDITOR
-  VIEWER
 }
 
 enum EventType {
@@ -270,7 +275,11 @@ model PasswordResetToken {
   @@map("password_reset_tokens")
 }
 
-/// Verknüpft Benutzer mit Organisationen – erlaubt mehrere Accounts pro Organisation
+/// Verbindet Benutzerkonten mit Organisationen (n:m).
+///
+/// Ein Benutzerkonto ist ausschliesslich ein Login. Der Zugriff auf eine
+/// konkrete Fasnacht oder Gugge ergibt sich einzig aus einem Eintrag in
+/// dieser Tabelle – niemals aus der globalen Rolle FASNACHT oder GUGGE.
 model Membership {
   id             String         @id @default(cuid())
   userId         String

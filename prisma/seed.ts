@@ -8,6 +8,8 @@
 import { PrismaClient, type OrganizationType, type Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
+import { syncClaimStatus } from "../src/lib/claim-status";
+
 const prisma = new PrismaClient();
 
 const CANTONS = [
@@ -588,8 +590,10 @@ async function seedDemoContent(_featureByKey: Map<string, string>) {
     }
   }
 
-  // Zweiter Account auf derselben Organisation – zeigt die Mehrbenutzerfähigkeit.
+  // Zweiter Account auf derselben Organisation sowie ein Konto mit Zugriff auf
+  // zwei Organisationen – zeigt beide Richtungen der n:m-Beziehung.
   const oltenId = orgIds.get("oltner-fasnacht");
+  const chessleteId = orgIds.get("guggenmusik-chesslete-olten");
   if (oltenId) {
     const webmaster = await prisma.user.upsert({
       where: { email: "webmaster-olten@example.ch" },
@@ -605,9 +609,26 @@ async function seedDemoContent(_featureByKey: Map<string, string>) {
     });
     await prisma.membership.upsert({
       where: { userId_organizationId: { userId: webmaster.id, organizationId: oltenId } },
-      create: { userId: webmaster.id, organizationId: oltenId, role: "EDITOR", title: "Webmaster" },
-      update: {},
+      create: { userId: webmaster.id, organizationId: oltenId, role: "MANAGER", title: "Webmaster" },
+      // Seed-Daten sollen den gewünschten Demonstrationszustand herstellen.
+      update: { role: "MANAGER", title: "Webmaster" },
     });
+
+    // Dasselbe Konto betreut zusätzlich eine Gugge.
+    if (chessleteId) {
+      await prisma.membership.upsert({
+        where: {
+          userId_organizationId: { userId: webmaster.id, organizationId: chessleteId },
+        },
+        create: {
+          userId: webmaster.id,
+          organizationId: chessleteId,
+          role: "EDITOR",
+          title: "Webmaster",
+        },
+        update: {},
+      });
+    }
   }
 
   console.log("→ Veranstaltungen …");
@@ -890,11 +911,19 @@ async function seedDemoContent(_featureByKey: Map<string, string>) {
     });
   }
 
+  // Übernahmestatus an den tatsächlichen Zuweisungen ausrichten.
+  console.log("→ Übernahmestatus abgleichen …");
+  for (const [, id] of orgIds) {
+    await syncClaimStatus(prisma, id);
+  }
+
   console.log("\nZugangsdaten:");
   console.log(`  ADMIN     ${adminEmail} / ${adminPassword}`);
   console.log(`  TEAM      ${teamEmail} / ${teamPassword}`);
   console.log(`  FASNACHT  oltner-fasnacht@example.ch / ${orgPassword}`);
-  console.log(`  FASNACHT  webmaster-olten@example.ch / ${orgPassword}  (zweiter Account, gleiche Organisation)`);
+  console.log(
+    `  FASNACHT  webmaster-olten@example.ch / ${orgPassword}  (zwei Organisationen: Oltner Fasnacht + Chesslete)`,
+  );
   console.log(`  GUGGE     chesslete@example.ch / ${orgPassword}`);
 }
 
