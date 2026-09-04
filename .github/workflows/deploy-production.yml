@@ -167,20 +167,31 @@ jobs:
 
             unset COMPOSE_PROFILES
 
-            echo "==> Belegung von Port 3000 prüfen"
-            # Hält ein fremder Prozess den Port, scheitert "up" mit einer
-            # wenig aussagekräftigen Docker-Meldung. Diese Übersicht benennt
-            # den Verursacher. Sie ist rein informativ und ändert nichts.
+            echo "==> Lage vor dem Start"
+            # Rein informativ: Wer lauscht auf Port 3000 und in welchem
+            # Zustand sind die Container? Ein Container in einer
+            # Neustartschleife ist hier sofort erkennbar.
             if command -v ss >/dev/null 2>&1; then
-              ss -ltnp 2>/dev/null | grep -E ':3000[[:space:]]' || echo "    ss: kein Listener auf 3000"
+              ss -ltnp 2>/dev/null | grep -E ':3000[[:space:]]' || echo "    kein Listener auf Port 3000"
             elif command -v netstat >/dev/null 2>&1; then
-              netstat -ltnp 2>/dev/null | grep -E ':3000[[:space:]]' || echo "    netstat: kein Listener auf 3000"
+              netstat -ltnp 2>/dev/null | grep -E ':3000[[:space:]]' || echo "    kein Listener auf Port 3000"
             fi
-            docker ps --format '    {{.Names}} | {{.Image}} | {{.Ports}}' | grep 3000 \
-              || echo "    Kein Container veröffentlicht Port 3000"
+            docker ps -a --format '    {{.Names}} | {{.Status}} | {{.Ports}}' | head -20
 
             echo "==> Container starten"
-            compose up -d --remove-orphans
+            # Den alten Anwendungscontainer zuerst entfernen. Startet er nach
+            # einem Absturz immer wieder neu, belegt er den Port zeitweise und
+            # das Anlegen des neuen Containers scheitert an genau diesem
+            # Wettrennen.
+            compose stop app >/dev/null 2>&1 || true
+            compose rm -f app >/dev/null 2>&1 || true
+
+            if ! compose up -d --remove-orphans; then
+              echo "Die Container liessen sich nicht starten." >&2
+              compose ps -a
+              compose logs --tail=200 app >&2
+              exit 1
+            fi
 
             echo "==> Health-Check"
             # Das Image bringt einen eigenen HEALTHCHECK auf /api/health mit.
