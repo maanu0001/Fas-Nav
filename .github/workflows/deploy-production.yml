@@ -1,0 +1,188 @@
+name: Deploy Production
+
+# Produktives Deployment von Fas-Nav.ch.
+#
+# Ablauf: Bei jedem Push auf main wird zuerst vollständig geprüft und gebaut.
+# Nur wenn das fehlerfrei durchläuft, wird per SSH auf den Produktionsserver
+# deployed. Schlägt ein Prüfschritt fehl, findet kein Deployment statt.
+
+on:
+  push:
+    branches: [main]
+  # Erlaubt ein erneutes Ausrollen des aktuellen Stands ohne neuen Commit.
+  workflow_dispatch:
+
+# Zwei gleichzeitige Deployments auf denselben Server würden sich in die Quere
+# kommen. Laufende Deployments werden deshalb nicht abgebrochen, sondern der
+# nächste Lauf wartet.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Prüfen und bauen
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      # Platzhalter: Weder die Codegenerierung noch der Build stellen eine
+      # Datenbankverbindung her. Prisma benötigt lediglich eine syntaktisch
+      # gültige URL, um das Schema einzulesen.
+      DATABASE_URL: postgresql://build:build@localhost:5432/build?schema=public
+      NEXT_PUBLIC_APP_URL: https://fas-nav.ch
+      NEXT_TELEMETRY_DISABLED: "1"
+
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@v4
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@v4
+        with:
+          # Entspricht der Node-Version des Produktions-Images (node:22-alpine).
+          node-version: "22"
+          cache: npm
+
+      - name: Abhängigkeiten installieren
+        run: npm ci
+
+      - name: Prisma Client erzeugen
+        run: npx prisma generate
+
+      - name: Lint prüfen
+        run: npm run lint
+
+      - name: Production Build
+        run: npm run build
+
+  deploy:
+    name: Auf Produktionsserver ausrollen
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+
+    steps:
+      - name: SSH-Zugang vorbereiten
+        env:
+          SSH_KEY: ${{ secrets.PRODUCTION_SSH_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.PRODUCTION_SSH_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${SSH_KEY:-}" ]; then
+            echo "::error::Secret PRODUCTION_SSH_KEY fehlt."
+            exit 1
+          fi
+          if [ -z "${SSH_KNOWN_HOSTS:-}" ]; then
+            echo "::error::Secret PRODUCTION_SSH_KNOWN_HOSTS fehlt. Erzeugen mit: ssh-keyscan -p <port> <host>"
+            exit 1
+          fi
+
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          # Der Hostschlüssel wird geprüft; ein unbekannter Server bricht ab.
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Deployment ausführen
+        env:
+          SSH_HOST: ${{ secrets.PRODUCTION_SSH_HOST }}
+          SSH_USER: ${{ secrets.PRODUCTION_SSH_USER }}
+          SSH_PORT: ${{ secrets.PRODUCTION_SSH_PORT }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${SSH_HOST:-}" ] || [ -z "${SSH_USER:-}" ]; then
+            echo "::error::Secrets PRODUCTION_SSH_HOST und PRODUCTION_SSH_USER werden benötigt."
+            exit 1
+          fi
+
+          ssh -i ~/.ssh/deploy_key \
+              -o StrictHostKeyChecking=yes \
+              -o UserKnownHostsFile=~/.ssh/known_hosts \
+              -o BatchMode=yes \
+              -p "${SSH_PORT:-22}" \
+              "$SSH_USER@$SSH_HOST" \
+              'bash -s' <<'REMOTE'
+          set -euo pipefail
+
+          APP_DIR=/opt/fas-nav/app
+          COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod.yml"
+
+          cd "$APP_DIR"
+
+          # Docker Compose v2 bevorzugen, ältere Installationen weiterhin unterstützen.
+          if docker compose version >/dev/null 2>&1; then
+            compose() { docker compose $COMPOSE_FILES "$@"; }
+          elif command -v docker-compose >/dev/null 2>&1; then
+            compose() { docker-compose $COMPOSE_FILES "$@"; }
+          else
+            echo "Docker Compose ist auf dem Server nicht verfügbar." >&2
+            exit 1
+          fi
+
+          echo "==> Aktuellen Stand von origin/main holen"
+          git fetch --prune origin main
+          # Harter Abgleich auf den Remote-Stand. Bewusst kein "git clean":
+          # .env und andere nicht versionierte Betriebsdateien müssen erhalten
+          # bleiben.
+          git checkout -B main origin/main
+          git reset --hard origin/main
+          echo "    Stand: $(git rev-parse --short HEAD) – $(git log -1 --pretty=%s)"
+
+          echo "==> Images bauen"
+          compose build --pull
+
+          echo "==> Datenbank starten"
+          compose up -d db
+
+          echo "==> Migrationen anwenden"
+          # Die Prisma-CLI wird über ihren Pfad aufgerufen: Das Laufzeit-Image
+          # enthält node_modules/prisma, aber nicht node_modules/.bin, weshalb
+          # npx den lokalen Befehl nicht auflösen könnte.
+          compose run --rm -T app \
+            node node_modules/prisma/build/index.js migrate deploy
+
+          echo "==> Container starten"
+          compose up -d --remove-orphans
+
+          echo "==> Health-Check"
+          # Die Prüfung läuft im Container selbst. So ist sie unabhängig davon,
+          # welche Werkzeuge auf dem Host installiert sind, und trifft genau den
+          # Port, auf dem die Anwendung tatsächlich lauscht.
+          ok=0
+          for attempt in $(seq 1 30); do
+            if compose exec -T app node -e \
+              "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))" \
+              >/dev/null 2>&1; then
+              ok=1
+              echo "    Anwendung antwortet (Versuch $attempt)."
+              break
+            fi
+            sleep 5
+          done
+
+          if [ "$ok" -ne 1 ]; then
+            echo "Die Anwendung antwortet nach dem Deployment nicht." >&2
+            compose ps
+            compose logs --tail=80 app >&2
+            exit 1
+          fi
+
+          echo "==> Nicht mehr benötigte Images entfernen"
+          docker image prune -f >/dev/null 2>&1 || true
+
+          echo "==> Deployment abgeschlossen"
+          compose ps
+          REMOTE
+
+      - name: SSH-Schlüssel entfernen
+        if: always()
+        run: rm -f ~/.ssh/deploy_key

@@ -254,7 +254,57 @@ und bezahlte Rechnungen. Das Skript ist idempotent.
 
 ## Deployment
 
-### Produktion mit Docker Compose
+Produktiv deployed wird ausschliesslich aus dem Branch **`main`**.
+
+### Automatisches Deployment über GitHub Actions
+
+Der Workflow `.github/workflows/deploy-production.yml` läuft bei jedem Push auf
+`main` und lässt sich zusätzlich von Hand auslösen.
+
+1. **Prüfen und bauen** (`npm ci`, `npx prisma generate`, `npm run lint`,
+   `npm run build`). Schlägt einer dieser Schritte fehl, wird **nicht**
+   deployed.
+2. **Ausrollen** per SSH auf den Produktionsserver nach `/opt/fas-nav/app`:
+   `origin/main` auschecken, Images bauen, `prisma migrate deploy` ausführen,
+   Container starten und anschliessend `/api/health` prüfen. Antwortet die
+   Anwendung nicht, schlägt der Lauf fehl.
+
+Zwei Deployments laufen nie gleichzeitig; ein zweiter Push wartet, bis der
+vorherige Lauf beendet ist.
+
+#### Benötigte GitHub-Secrets
+
+| Secret | Zweck |
+| --- | --- |
+| `PRODUCTION_SSH_HOST` | Hostname oder IP des Produktionsservers |
+| `PRODUCTION_SSH_USER` | Benutzer für das Deployment |
+| `PRODUCTION_SSH_KEY` | Privater SSH-Schlüssel (vollständig, inklusive Kopf- und Fusszeile) |
+| `PRODUCTION_SSH_KNOWN_HOSTS` | Hostschlüssel des Servers, erzeugt mit `ssh-keyscan -p <port> <host>` |
+| `PRODUCTION_SSH_PORT` | Optional, Standard ist 22 |
+
+Der Hostschlüssel wird geprüft (`StrictHostKeyChecking=yes`). Ohne
+`PRODUCTION_SSH_KNOWN_HOSTS` bricht das Deployment mit einer klaren Meldung ab,
+statt die Prüfung stillschweigend zu umgehen.
+
+Anwendungs-Secrets wie `AUTH_SECRET` oder `DATABASE_URL` gehören **nicht** zu
+diesen Secrets. Sie liegen ausschliesslich in der `.env` auf dem
+Produktionsserver und werden vom Deployment nicht angefasst.
+
+#### Einmalige Einrichtung des Servers
+
+```bash
+sudo mkdir -p /opt/fas-nav
+sudo git clone -b main https://github.com/maanu0001/Fas-Nav /opt/fas-nav/app
+cd /opt/fas-nav/app
+cp .env.example .env          # Produktionswerte eintragen, danach nie versionieren
+```
+
+Die `.env` sowie hochgeladene Dateien bleiben bei jedem Deployment erhalten:
+Der Workflow gleicht den Stand mit `git reset --hard origin/main` ab und
+verwendet bewusst **kein** `git clean`, das nicht versionierte Betriebsdateien
+löschen würde.
+
+### Manuelles Deployment mit Docker Compose
 
 ```bash
 cp .env.example .env          # Produktionswerte eintragen
