@@ -45,6 +45,11 @@ export const editorSelect = {
   hasMonsterConcert: true,
   hasSchnitzelbank: true,
   hasBeizenfasnacht: true,
+  arrivalByCar: true,
+  arrivalByPublicTransport: true,
+  arrivalNotes: true,
+  arrivalMapUrl: true,
+  arrivalTransportUrl: true,
   logo: { select: { id: true, url: true, thumbnailUrl: true, alt: true, width: true, height: true } },
   header: { select: { id: true, url: true, thumbnailUrl: true, alt: true, width: true, height: true } },
   socialLinks: {
@@ -95,6 +100,11 @@ export function toEditorState(org: EditorOrganization): EditorState {
     hasMonsterConcert: org.hasMonsterConcert,
     hasSchnitzelbank: org.hasSchnitzelbank,
     hasBeizenfasnacht: org.hasBeizenfasnacht,
+    arrivalByCar: org.arrivalByCar ?? "",
+    arrivalByPublicTransport: org.arrivalByPublicTransport ?? "",
+    arrivalNotes: org.arrivalNotes ?? "",
+    arrivalMapUrl: org.arrivalMapUrl ?? "",
+    arrivalTransportUrl: org.arrivalTransportUrl ?? "",
     logo: org.logo ?? null,
     header: org.header ?? null,
     socialLinks: org.socialLinks.map((link) => ({

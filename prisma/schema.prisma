@@ -491,6 +491,20 @@ model Organization {
   hasSchnitzelbank     Boolean?
   hasBeizenfasnacht    Boolean?
 
+  // Anreise. Alle Angaben freiwillig; ohne Inhalt entfällt der Abschnitt auf
+  // der öffentlichen Seite vollständig.
+  /// Zufahrt, Parkmöglichkeiten, Sperrungen, Park and Ride
+  arrivalByCar             String? @db.Text
+  /// Bahn, Bus, Tram, nächste Haltestelle, Sonderfahrplan, Nachtverbindungen
+  arrivalByPublicTransport String? @db.Text
+  /// Alles, was sich weder Auto noch ÖV zuordnen lässt – Velo, Car, Taxi,
+  /// Shuttle, barrierefreie Anreise, örtliche Besonderheiten
+  arrivalNotes             String? @db.Text
+  /// Karte mit dem Treffpunkt oder dem Parkplatz
+  arrivalMapUrl            String?
+  /// Fahrplanauskunft, z. B. die Verbindung zum Bahnhof
+  arrivalTransportUrl      String?
+
   // Herkunft und Qualität der Daten (nur intern sichtbar)
   /// Stabile Kennung aus der Recherchedatei, z.B. CH-BS-CARNIVAL-BASEL-001.
   /// Ermöglicht wiederholte Importe ohne Duplikate.

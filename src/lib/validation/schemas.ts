@@ -167,6 +167,15 @@ export const organizationContentSchema = z.object({
   hasSchnitzelbank: z.boolean().nullable().optional(),
   hasBeizenfasnacht: z.boolean().nullable().optional(),
 
+  // Anreise. optionalText entfernt HTML und macht leere Eingaben zu null,
+  // die Adressen lassen nur http(s) zu – beides dieselben Bausteine wie bei
+  // den übrigen Inhaltsfeldern.
+  arrivalByCar: optionalText(4000),
+  arrivalByPublicTransport: optionalText(4000),
+  arrivalNotes: optionalText(4000),
+  arrivalMapUrl: optionalUrl,
+  arrivalTransportUrl: optionalUrl,
+
   logoId: optionalCuid,
   headerId: optionalCuid,
   ogImageId: optionalCuid,

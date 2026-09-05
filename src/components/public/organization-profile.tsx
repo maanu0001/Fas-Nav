@@ -2,13 +2,17 @@ import Link from "next/link";
 import Image from "next/image";
 import {
   CalendarDays,
+  Car,
   Download,
   ExternalLink,
   Globe,
+  Info,
   Mail,
+  Map,
   MapPin,
   Music2,
   Phone,
+  TrainFront,
   Users,
 } from "lucide-react";
 
@@ -66,6 +70,33 @@ function Panel({
   );
 }
 
+/**
+ * Ein Weg der Anreise.
+ *
+ * Icon und Beschriftung stehen immer zusammen – das Symbol allein trägt die
+ * Bedeutung nicht. Der Text läuft über Prose und behält damit seine Absätze
+ * und Zeilenumbrüche, ohne dass HTML gerendert würde.
+ */
+function ArrivalCard({
+  icon: Icon,
+  title,
+  text,
+}: {
+  icon: typeof Car;
+  title: string;
+  text: string;
+}) {
+  return (
+    <Card className="p-5">
+      <h3 className="mb-2.5 flex items-center gap-2 font-display text-base font-semibold">
+        <Icon className="h-5 w-5 shrink-0 text-accent-700" aria-hidden />
+        {title}
+      </h3>
+      <Prose text={text} />
+    </Card>
+  );
+}
+
 export function OrganizationProfile({
   organization: org,
   events,
@@ -81,6 +112,14 @@ export function OrganizationProfile({
   const showProgram = org.programItems.length > 0;
   const showDownloads = org.downloads.length > 0;
   const showFaq = org.faqs.length > 0;
+  // Der ganze Abschnitt entfällt, solange keine einzige Angabe gepflegt ist.
+  const hatAnreise = Boolean(
+    org.arrivalByCar ||
+      org.arrivalByPublicTransport ||
+      org.arrivalNotes ||
+      org.arrivalMapUrl ||
+      org.arrivalTransportUrl,
+  );
 
   const address = [org.street, [org.zip, org.city].filter(Boolean).join(" ")]
     .filter(Boolean)
@@ -268,6 +307,63 @@ export function OrganizationProfile({
                 </details>
               ) : null}
             </Panel>
+
+            {/*
+              Anreise erscheint nur, wenn wenigstens eine Angabe gepflegt ist.
+              Auch die drei Karten und die beiden Verweise werden je einzeln
+              geprüft – eine leere Karte oder ein Knopf ins Leere wäre für
+              Besucher schlechter als gar kein Hinweis.
+            */}
+            {hatAnreise ? (
+              <Panel title="Anreise" id="anreise">
+                <div className="grid gap-4 md:grid-cols-2">
+                  {org.arrivalByCar ? (
+                    <ArrivalCard icon={Car} title="Mit dem Auto" text={org.arrivalByCar} />
+                  ) : null}
+                  {org.arrivalByPublicTransport ? (
+                    <ArrivalCard
+                      icon={TrainFront}
+                      title="Mit dem ÖV"
+                      text={org.arrivalByPublicTransport}
+                    />
+                  ) : null}
+                  {org.arrivalNotes ? (
+                    <ArrivalCard
+                      icon={Info}
+                      title="Weitere Hinweise"
+                      text={org.arrivalNotes}
+                    />
+                  ) : null}
+                </div>
+
+                {org.arrivalMapUrl || org.arrivalTransportUrl ? (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {org.arrivalMapUrl ? (
+                      <ButtonLink
+                        href={org.arrivalMapUrl}
+                        variant="outline"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Map />
+                        Auf der Karte ansehen
+                      </ButtonLink>
+                    ) : null}
+                    {org.arrivalTransportUrl ? (
+                      <ButtonLink
+                        href={org.arrivalTransportUrl}
+                        variant="outline"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <TrainFront />
+                        Fahrplan aufrufen
+                      </ButtonLink>
+                    ) : null}
+                  </div>
+                ) : null}
+              </Panel>
+            ) : null}
 
             {showGallery ? (
               <Panel title="Bildergalerie" id="galerie">

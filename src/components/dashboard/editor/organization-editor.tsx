@@ -25,6 +25,7 @@ const SECTIONS = [
   { id: "merkmale", label: "Merkmale" },
   { id: "bilder", label: "Bilder" },
   { id: "kontakt", label: "Kontakt" },
+  { id: "anreise", label: "Anreise" },
   { id: "social", label: "Social Media" },
   { id: "seo", label: "Suchmaschinen" },
 ] as const;
@@ -157,6 +158,11 @@ export function OrganizationEditor({
           hasMonsterConcert: state.hasMonsterConcert,
           hasSchnitzelbank: state.hasSchnitzelbank,
           hasBeizenfasnacht: state.hasBeizenfasnacht,
+          arrivalByCar: state.arrivalByCar || null,
+          arrivalByPublicTransport: state.arrivalByPublicTransport || null,
+          arrivalNotes: state.arrivalNotes || null,
+          arrivalMapUrl: state.arrivalMapUrl || null,
+          arrivalTransportUrl: state.arrivalTransportUrl || null,
           logoId: state.logo?.id ?? null,
           headerId: state.header?.id ?? null,
         },
@@ -665,6 +671,95 @@ export function OrganizationEditor({
                   />
                 </Field>
               ) : null}
+            </div>
+          ) : null}
+
+          {section === "anreise" ? (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Alle Angaben sind freiwillig. Auf deiner Seite erscheint nur, was du hier
+                ausfüllst – bleibt alles leer, entfällt der Abschnitt „Anreise“ vollständig.
+              </p>
+
+              <Field
+                label="Mit dem Auto"
+                htmlFor="arrivalByCar"
+                error={errors.arrivalByCar}
+                hint="Zufahrt, Parkmöglichkeiten, Parkhäuser, Sperrungen, Park and Ride."
+              >
+                <Textarea
+                  id="arrivalByCar"
+                  rows={5}
+                  value={state.arrivalByCar}
+                  onChange={(e) => set("arrivalByCar", e.target.value)}
+                  maxLength={4000}
+                  placeholder="Parkhaus Bahnhof, 5 Gehminuten. Während des Umzugs ist die Altstadt gesperrt."
+                />
+              </Field>
+
+              <Field
+                label="Mit dem ÖV"
+                htmlFor="arrivalByPublicTransport"
+                error={errors.arrivalByPublicTransport}
+                hint="Bahnhof oder Haltestelle, Fussweg, Sonderfahrplan, Nachtverbindungen."
+              >
+                <Textarea
+                  id="arrivalByPublicTransport"
+                  rows={5}
+                  value={state.arrivalByPublicTransport}
+                  onChange={(e) => set("arrivalByPublicTransport", e.target.value)}
+                  maxLength={4000}
+                  placeholder="Ab Bahnhof 10 Gehminuten. Bus 3 bis Haltestelle Marktplatz."
+                />
+              </Field>
+
+              <Field
+                label="Weitere Hinweise zur Anreise"
+                htmlFor="arrivalNotes"
+                error={errors.arrivalNotes}
+                hint="Velo, Car, Taxi, Shuttle, barrierefreie Anreise oder örtliche Besonderheiten."
+              >
+                <Textarea
+                  id="arrivalNotes"
+                  rows={4}
+                  value={state.arrivalNotes}
+                  onChange={(e) => set("arrivalNotes", e.target.value)}
+                  maxLength={4000}
+                />
+              </Field>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field
+                  label="Karte"
+                  htmlFor="arrivalMapUrl"
+                  error={errors.arrivalMapUrl}
+                  hint="Vollständige Adresse inklusive https://"
+                >
+                  <Input
+                    id="arrivalMapUrl"
+                    type="url"
+                    value={state.arrivalMapUrl}
+                    onChange={(e) => set("arrivalMapUrl", e.target.value)}
+                    placeholder="https://maps.app.goo.gl/…"
+                    maxLength={500}
+                  />
+                </Field>
+                <Field
+                  label="Fahrplanauskunft"
+                  htmlFor="arrivalTransportUrl"
+                  error={errors.arrivalTransportUrl}
+                  hint="Zum Beispiel die Verbindung zum Bahnhof."
+                >
+                  <Input
+                    id="arrivalTransportUrl"
+                    type="url"
+                    value={state.arrivalTransportUrl}
+                    onChange={(e) => set("arrivalTransportUrl", e.target.value)}
+                    placeholder="https://www.sbb.ch/…"
+                    maxLength={500}
+                  />
+                </Field>
+              </div>
             </div>
           ) : null}
 

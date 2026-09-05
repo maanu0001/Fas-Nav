@@ -48,6 +48,12 @@ export type EditorState = {
   hasMonsterConcert: boolean | null;
   hasSchnitzelbank: boolean | null;
   hasBeizenfasnacht: boolean | null;
+  // Anreise – alle Felder freiwillig.
+  arrivalByCar: string;
+  arrivalByPublicTransport: string;
+  arrivalNotes: string;
+  arrivalMapUrl: string;
+  arrivalTransportUrl: string;
   logo: UploadedMedia | null;
   header: UploadedMedia | null;
   socialLinks: SocialLinkDraft[];
