@@ -45,6 +45,14 @@ export const PERMISSIONS = {
   manageSettings: (role: Role) => isAdmin(role),
   managePlacements: (role: Role) => isStaff(role),
   viewAllTickets: (role: Role) => isStaff(role),
+  /**
+   * Kontaktanfragen der Website und Übernahmeanfragen bearbeiten.
+   *
+   * Beides sind Zuschriften von aussen, die das Team operativ abarbeitet –
+   * anders als Preise oder Einstellungen also nicht der Administration
+   * vorbehalten. Deckt Listen, Detailansichten und Statusänderungen ab.
+   */
+  handleContactRequests: (role: Role) => isStaff(role),
   viewAuditLog: (role: Role) => isStaff(role),
   viewPlatformStats: (role: Role) => isStaff(role),
   verifyOrganizations: (role: Role) => isStaff(role),

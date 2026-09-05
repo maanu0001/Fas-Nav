@@ -33,14 +33,15 @@ export function DashboardShell({
   user,
   organizations,
   unreadNotifications,
-  openTickets,
+  badges,
   children,
 }: {
   navigation: NavGroup[];
   user: SidebarUser;
   organizations: SidebarOrganizations;
   unreadNotifications: number;
-  openTickets: number;
+  /** Zähler je Navigationsziel, z. B. offene Tickets. Fehlt ein Eintrag, wird nichts angezeigt. */
+  badges: Record<string, number>;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -64,7 +65,8 @@ export function DashboardShell({
               const active = item.exact
                 ? pathname === item.href
                 : pathname === item.href || pathname.startsWith(`${item.href}/`);
-              const badge = item.href.endsWith("/tickets") && openTickets > 0 ? openTickets : null;
+              const anzahl = badges[item.href] ?? 0;
+              const badge = anzahl > 0 ? anzahl : null;
 
               return (
                 <li key={item.href}>
@@ -81,7 +83,10 @@ export function DashboardShell({
                     <NavIcon name={item.icon} className="h-4 w-4 shrink-0" />
                     <span className="min-w-0 flex-1 truncate">{item.label}</span>
                     {badge ? (
-                      <span className="rounded-full bg-accent px-1.5 py-0.5 text-[0.65rem] font-bold text-accent-foreground">
+                      <span
+                        className="rounded-full bg-accent px-1.5 py-0.5 text-[0.65rem] font-bold text-accent-foreground"
+                        aria-label={`${badge} unerledigt`}
+                      >
                         {badge}
                       </span>
                     ) : null}

@@ -5,6 +5,7 @@ import {
   Gauge,
   Image as ImageIcon,
   LayoutTemplate,
+  Mail,
   Megaphone,
   ScrollText,
   Settings,
@@ -32,6 +33,7 @@ const ICONS = {
   scroll: ScrollText,
   settings: Settings,
   tag: Tag,
+  mail: Mail,
 } as const;
 
 export function NavIcon({ name, className }: { name: string; className?: string }) {

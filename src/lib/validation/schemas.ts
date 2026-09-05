@@ -408,6 +408,13 @@ export const contactSchema = z.object({
   website: z.string().max(200).optional(),
 });
 
+/** Bearbeitungsstand, den ADMIN und TEAM setzen dürfen. */
+export const claimRequestStatusEnum = z.enum(["PENDING", "IN_REVIEW", "APPROVED", "REJECTED"]);
+
+export const claimRequestUpdateSchema = z.object({
+  status: claimRequestStatusEnum,
+});
+
 export const claimRequestSchema = z.object({
   organizationId: cuid,
   contactName: requiredText(120, "Name"),

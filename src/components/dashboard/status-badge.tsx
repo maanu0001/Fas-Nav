@@ -9,6 +9,8 @@ import type {
 
 import { Badge, type BadgeProps } from "@/components/ui/badge";
 import {
+  CLAIM_REQUEST_STATUS_LABELS,
+  type ClaimRequestStatus,
   PAYMENT_STATUS_LABELS,
   PUBLICATION_STATUS_LABELS,
   SUBSCRIPTION_STATUS_LABELS,
@@ -59,6 +61,17 @@ const PRIORITY: Record<TicketPriority, Variant> = {
   URGENT: "destructive",
 };
 
+/**
+ * Bearbeitungsstand einer Übernahmeanfrage.
+ * Die Farbe steht nie allein: Jedes Abzeichen trägt seine Bezeichnung.
+ */
+const CLAIM_REQUEST: Record<ClaimRequestStatus, Variant> = {
+  PENDING: "warning",
+  IN_REVIEW: "info",
+  APPROVED: "success",
+  REJECTED: "muted",
+};
+
 const VERIFICATION: Record<VerificationStatus, Variant> = {
   UNVERIFIED: "muted",
   VERIFIED: "info",
@@ -87,4 +100,11 @@ export function PriorityBadge({ priority }: { priority: TicketPriority }) {
 
 export function VerificationBadge({ status }: { status: VerificationStatus }) {
   return <Badge variant={VERIFICATION[status]}>{VERIFICATION_LABELS[status]}</Badge>;
+}
+
+export function ClaimRequestBadge({ status }: { status: string }) {
+  const bekannt = status in CLAIM_REQUEST_STATUS_LABELS;
+  if (!bekannt) return <Badge variant="muted">{status}</Badge>;
+  const wert = status as ClaimRequestStatus;
+  return <Badge variant={CLAIM_REQUEST[wert]}>{CLAIM_REQUEST_STATUS_LABELS[wert]}</Badge>;
 }

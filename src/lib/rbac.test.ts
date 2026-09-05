@@ -58,6 +58,8 @@ describe("Berechtigungen je Rolle", () => {
     "manageSubscriptions",
     "viewAllTickets",
     "verifyOrganizations",
+    // Kontaktanfragen und Übernahmeanfragen sind operative Arbeit des Teams.
+    "handleContactRequests",
   ] as const;
 
   for (const recht of adminUndTeam) {

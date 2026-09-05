@@ -60,6 +60,9 @@ export function dashboardNavigation(role: Role): NavGroup[] {
               ]
             : []),
           { href: "/dashboard/tickets", label: "Tickets", icon: "ticket" },
+          // Zuschriften über die Website. Admin und Team bearbeiten sie
+          // gemeinsam; die Prüfung dazu hängt am Recht handleContactRequests.
+          { href: "/dashboard/kontaktanfragen", label: "Kontaktanfragen", icon: "mail" },
           { href: "/dashboard/werbung", label: "Werbung", icon: "megaphone" },
         ],
       },

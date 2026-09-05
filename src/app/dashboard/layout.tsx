@@ -7,7 +7,9 @@ import { PUBLICATION_STATUS_LABELS, ROLE_LABELS } from "@/lib/constants";
 import { maintenanceScreenFor } from "@/lib/maintenance";
 import { dashboardNavigation } from "@/lib/navigation";
 import { prisma } from "@/lib/prisma";
+import { openContactRequestCounts } from "@/lib/queries/contact-requests";
 import { ticketScope } from "@/lib/queries/tickets";
+import { can } from "@/lib/rbac";
 import type { Role } from "@prisma/client";
 
 // Das Dashboard ist immer benutzerbezogen und liest zudem den Wartungsmodus
@@ -28,7 +30,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const context = await getDashboardContext();
   const role = context.user.role as Role;
 
-  const [unreadNotifications, openTickets] = await Promise.all([
+  // Zuschriften zählt nur, wer sie auch bearbeiten darf – sonst entstünde
+  // eine Zahl zu Datensätzen, die der Rolle verborgen bleiben.
+  const darfKontaktanfragen = can(role, "handleContactRequests");
+
+  const [unreadNotifications, openTickets, kontaktanfragen] = await Promise.all([
     prisma.notification.count({ where: { userId: context.user.id, readAt: null } }),
     prisma.ticket.count({
       where: {
@@ -44,6 +50,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         ],
       },
     }),
+    darfKontaktanfragen ? openContactRequestCounts() : Promise.resolve(null),
   ]);
 
   return (
@@ -74,7 +81,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
           : null
       }
       unreadNotifications={unreadNotifications}
-      openTickets={openTickets}
+      badges={{
+        "/dashboard/tickets": openTickets,
+        ...(kontaktanfragen ? { "/dashboard/kontaktanfragen": kontaktanfragen.total } : {}),
+      }}
     >
       {children}
     </DashboardShell>

@@ -100,6 +100,31 @@ export const CLAIM_STATUS_LABELS: Record<ClaimStatus, string> = {
   CLAIMED: "Beansprucht",
 };
 
+/**
+ * Bearbeitungsstand einer Übernahmeanfrage.
+ *
+ * Der Wert liegt als Text in ClaimRequest.status; PENDING ist der Standard
+ * beim Eingang. IN_REVIEW ist neu dazugekommen, damit sichtbar ist, dass sich
+ * jemand der Anfrage bereits angenommen hat.
+ *
+ * Nicht zu verwechseln mit Organization.claimStatus (CLAIM_STATUS_LABELS):
+ * Der beschreibt das Profil, dieser hier die einzelne Anfrage.
+ */
+export const CLAIM_REQUEST_STATUS_LABELS = {
+  PENDING: "Neu",
+  IN_REVIEW: "In Prüfung",
+  APPROVED: "Genehmigt",
+  REJECTED: "Abgelehnt",
+} as const;
+
+export type ClaimRequestStatus = keyof typeof CLAIM_REQUEST_STATUS_LABELS;
+
+/** Anfragen, die noch Arbeit verursachen – für Zähler und Hervorhebung. */
+export const OPEN_CLAIM_REQUEST_STATUSES: ClaimRequestStatus[] = ["PENDING", "IN_REVIEW"];
+
+/** Kontaktanfragen, die noch Arbeit verursachen. */
+export const OPEN_CONTACT_TICKET_STATUSES = ["OPEN", "IN_PROGRESS", "WAITING_FOR_CUSTOMER"] as const;
+
 export const ROLE_LABELS: Record<Role, string> = {
   ADMIN: "Admin",
   TEAM: "Team",
