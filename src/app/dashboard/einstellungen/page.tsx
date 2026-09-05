@@ -3,12 +3,14 @@ import type { Metadata } from "next";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { PasswordChangeForm } from "@/components/dashboard/password-change-form";
+import { AgendaReminderSettings } from "@/components/dashboard/agenda-reminder-settings";
 import { MaintenanceSettings } from "@/components/dashboard/maintenance-settings";
 import { PlatformSettingsForm } from "@/components/dashboard/platform-settings-form";
 import { ROLE_LABELS } from "@/lib/constants";
 import { getDashboardContext } from "@/lib/dashboard-context";
 import { prisma } from "@/lib/prisma";
 import { getMaintenanceState } from "@/lib/maintenance";
+import { getReminderSettings } from "@/lib/agenda-reminder-job";
 import { isAdmin } from "@/lib/rbac";
 import type { Role } from "@prisma/client";
 
@@ -27,6 +29,9 @@ export default async function SettingsPage() {
   // Der Wartungsmodus gehört zu den Einstellungen, wird aber als eigener
   // Abschnitt geführt: Er wirkt sofort auf die gesamte Website.
   const maintenance = admin ? await getMaintenanceState() : null;
+
+  // Erinnerung an fehlende Agenda-Einträge – ebenfalls nur für die Administration.
+  const reminder = admin ? await getReminderSettings() : null;
 
   return (
     <>
@@ -61,6 +66,8 @@ export default async function SettingsPage() {
         {admin && maintenance ? (
           <MaintenanceSettings enabled={maintenance.enabled} message={maintenance.message} />
         ) : null}
+
+        {admin && reminder ? <AgendaReminderSettings initial={reminder} /> : null}
 
         {admin ? (
           <Card className="p-5">

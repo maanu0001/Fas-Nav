@@ -140,9 +140,15 @@ const config: Config = {
 
         // Statusfarben als Skala, damit vorhandene Klassen wie
         // "bg-emerald-100" oder "text-red-700" dem Thema folgen.
+        // Jede Stufe, die im Code vorkommt, braucht hier einen Eintrag. Fehlt
+        // einer, greift Tailwind still auf seine eingebaute Palette zurück –
+        // die Farbe bleibt dann im Dunkelmodus hell.
         red: {
+          50: withOpacity("--danger-50"),
           100: withOpacity("--danger-100"),
-          200: withOpacity("--danger-100"),
+          200: withOpacity("--danger-200"),
+          300: withOpacity("--danger-300"),
+          400: withOpacity("--danger-400"),
           500: withOpacity("--danger-500"),
           600: withOpacity("--danger-500"),
           700: withOpacity("--danger-700"),
@@ -150,8 +156,11 @@ const config: Config = {
           900: withOpacity("--danger-800"),
         },
         emerald: {
+          50: withOpacity("--positive-50"),
           100: withOpacity("--positive-100"),
-          200: withOpacity("--positive-100"),
+          200: withOpacity("--positive-200"),
+          300: withOpacity("--positive-300"),
+          400: withOpacity("--positive-400"),
           500: withOpacity("--positive-500"),
           600: withOpacity("--positive-500"),
           700: withOpacity("--positive-700"),
@@ -171,9 +180,15 @@ const config: Config = {
           900: withOpacity("--gold-900"),
         },
         sky: {
+          50: withOpacity("--sky-50"),
           100: withOpacity("--sky-100"),
+          200: withOpacity("--sky-200"),
+          300: withOpacity("--sky-300"),
+          400: withOpacity("--sky-400"),
           500: withOpacity("--sky-500"),
+          600: withOpacity("--sky-600"),
           700: withOpacity("--sky-700"),
+          800: withOpacity("--sky-800"),
           900: withOpacity("--sky-900"),
         },
       },

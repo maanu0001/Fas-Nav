@@ -131,17 +131,37 @@
     --neutral-950: 216 60% 9%;
 
     /* --- Statusskalen --- */
+    /*
+     * Statusfarben. Alle Stufen, die im Code vorkommen, müssen hier stehen –
+     * fehlt eine, greift Tailwind auf seine eingebaute Palette zurück und die
+     * Farbe folgt dem Thema nicht mehr. Genau daran lagen die hellen Kästen im
+     * Dunkelmodus: Die Stufe 50 war nirgends definiert.
+     */
+    --danger-50: 356 100% 97%;
     --danger-100: 357 85% 94%;
+    --danger-200: 356 80% 88%;
+    --danger-300: 357 76% 78%;
+    --danger-400: 357 75% 64%;
     --danger-500: 357 74% 50%;
     --danger-700: 357 78% 35%;
     --danger-800: 356 72% 29%;
+    --positive-50: 152 66% 96%;
     --positive-100: 152 60% 90%;
+    --positive-200: 152 56% 80%;
+    --positive-300: 155 58% 66%;
+    --positive-400: 157 60% 50%;
     --positive-500: 158 64% 38%;
     --positive-700: 158 64% 26%;
     --positive-800: 158 62% 21%;
+    --sky-50: 202 95% 97%;
     --sky-100: 202 90% 92%;
+    --sky-200: 201 88% 84%;
+    --sky-300: 200 88% 72%;
+    --sky-400: 199 89% 58%;
     --sky-500: 199 90% 45%;
+    --sky-600: 200 88% 38%;
     --sky-700: 202 78% 30%;
+    --sky-800: 203 74% 25%;
     --sky-900: 205 70% 22%;
 
     --radius: 0.7rem;
@@ -255,17 +275,36 @@
     --neutral-900: 210 32% 92%;
     --neutral-950: 210 40% 97%;
 
+    /*
+     * Im Dunkelmodus kehren sich die Rollen um: Die niedrigen Stufen sind
+     * Flächen und deshalb dunkel, die hohen sind Text und deshalb hell.
+     * Stufe 50 ist die ruhigste Fläche, 200 die Umrandung dazu.
+     */
+    --danger-50: 356 42% 16%;
     --danger-100: 356 45% 24%;
+    --danger-200: 356 42% 32%;
+    --danger-300: 357 50% 44%;
+    --danger-400: 357 62% 54%;
     --danger-500: 357 74% 62%;
     --danger-700: 357 72% 76%;
     --danger-800: 356 68% 83%;
+    --positive-50: 158 38% 13%;
     --positive-100: 158 40% 20%;
+    --positive-200: 158 38% 27%;
+    --positive-300: 158 44% 38%;
+    --positive-400: 158 50% 47%;
     --positive-500: 158 55% 55%;
     --positive-700: 155 50% 74%;
     --positive-800: 155 48% 82%;
+    --sky-50: 205 44% 15%;
     --sky-100: 205 45% 22%;
+    --sky-200: 204 42% 30%;
+    --sky-300: 202 50% 42%;
+    --sky-400: 200 68% 50%;
     --sky-500: 199 80% 58%;
+    --sky-600: 200 75% 68%;
     --sky-700: 200 70% 76%;
+    --sky-800: 201 65% 82%;
     --sky-900: 202 60% 86%;
 
     --shadow-color: 216 70% 3%;

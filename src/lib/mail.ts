@@ -9,14 +9,25 @@ export type MailMessage = {
   html?: string;
 };
 
-export async function sendMail(message: MailMessage): Promise<{ sent: boolean }> {
+/**
+ * Ergebnis eines Versands.
+ *
+ * `reason` unterscheidet den Fall „es gibt gar keinen Mailserver" vom Fall
+ * „der Versand ist gescheitert". Aufrufer, die eine Wiederholung steuern,
+ * brauchen diesen Unterschied: Ohne Mailserver ist nichts passiert und ein
+ * späterer Versuch sinnvoll; ein gescheiterter Versand sollte dagegen nicht
+ * endlos wiederholt werden.
+ */
+export type MailResult = { sent: boolean; reason?: "not_configured" | "failed" };
+
+export async function sendMail(message: MailMessage): Promise<MailResult> {
   const host = process.env.SMTP_HOST;
 
   if (!host) {
     console.info(
       `[mail] SMTP nicht konfiguriert – Nachricht an ${message.to}: ${message.subject}`,
     );
-    return { sent: false };
+    return { sent: false, reason: "not_configured" };
   }
 
   try {
@@ -42,7 +53,7 @@ export async function sendMail(message: MailMessage): Promise<{ sent: boolean }>
     return { sent: true };
   } catch (error) {
     console.error("[mail] Versand fehlgeschlagen:", error);
-    return { sent: false };
+    return { sent: false, reason: "failed" };
   }
 }
 

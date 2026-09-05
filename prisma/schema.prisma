@@ -491,6 +491,11 @@ model Organization {
   hasSchnitzelbank     Boolean?
   hasBeizenfasnacht    Boolean?
 
+  /// Zeitpunkt der letzten Erinnerung an fehlende Agenda-Einträge.
+  /// Steuert die Sperrfrist; wird geleert, sobald wieder ein kommender Termin
+  /// erfasst ist, damit später erneut erinnert werden kann.
+  agendaReminderSentAt DateTime?
+
   // Anreise. Alle Angaben freiwillig; ohne Inhalt entfällt der Abschnitt auf
   // der öffentlichen Seite vollständig.
   /// Zufahrt, Parkmöglichkeiten, Sperrungen, Park and Ride

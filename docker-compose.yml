@@ -50,6 +50,9 @@ services:
       SMTP_SECURE: ${SMTP_SECURE:-false}
       MAIL_FROM: ${MAIL_FROM:-Fas-Nav.ch <noreply@fas-nav.ch>}
       CONTACT_NOTIFY_EMAIL: ${CONTACT_NOTIFY_EMAIL:-}
+      # Merkwort für den geplanten Erinnerungslauf. Ohne Wert nimmt der
+      # Endpunkt nur Aufrufe angemeldeter Administratoren an.
+      CRON_SECRET: ${CRON_SECRET:-}
     volumes:
       - uploads:/app/public/uploads
 
