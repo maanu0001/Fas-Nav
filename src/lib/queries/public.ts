@@ -3,6 +3,7 @@ import type { EventType, OrganizationType } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 import { startOfToday } from "@/lib/dates";
+import { eventSearchWhere, normalizeSearchTerm, organizationSearchWhere } from "@/lib/search";
 
 /**
  * Zentrale Lesezugriffe für den öffentlichen Bereich.
@@ -71,28 +72,35 @@ export type OrganizationFilters = {
   perPage?: number;
 };
 
+export async function buildOrganizationWhere(
+  filters: OrganizationFilters,
+): Promise<Prisma.OrganizationWhereInput> {
+  // Jede Bedingung steht als eigener Eintrag in `AND`. Das ist der Grund,
+  // weshalb hier kein Objektliteral mehr zusammengespreizt wird: Kanton und
+  // Region schrieben beide auf den Schlüssel `canton`, die Region hat den
+  // Kantonsfilter also überschrieben. In einer Liste kann das nicht passieren.
+  const bedingungen: Prisma.OrganizationWhereInput[] = [];
+
+  if (filters.canton) bedingungen.push({ canton: { slug: filters.canton } });
+  if (filters.region) bedingungen.push({ canton: { region: filters.region } });
+  if (filters.city) bedingungen.push({ city: { contains: filters.city, mode: "insensitive" } });
+  if (filters.foundedFrom) bedingungen.push({ foundedYear: { gte: filters.foundedFrom } });
+
+  const suche = filters.q ? await organizationSearchWhere(filters.q) : null;
+  if (suche) bedingungen.push(suche);
+
+  return {
+    ...publishedOrgWhere,
+    type: filters.type,
+    ...(bedingungen.length ? { AND: bedingungen } : {}),
+  };
+}
+
 export async function findOrganizations(filters: OrganizationFilters) {
   const page = Math.max(1, filters.page ?? 1);
   const perPage = Math.min(48, filters.perPage ?? 12);
 
-  const where: Prisma.OrganizationWhereInput = {
-    ...publishedOrgWhere,
-    type: filters.type,
-    ...(filters.canton ? { canton: { slug: filters.canton } } : {}),
-    ...(filters.region ? { canton: { region: filters.region } } : {}),
-    ...(filters.city ? { city: { contains: filters.city, mode: "insensitive" } } : {}),
-    ...(filters.foundedFrom ? { foundedYear: { gte: filters.foundedFrom } } : {}),
-    ...(filters.q
-      ? {
-          OR: [
-            { name: { contains: filters.q, mode: "insensitive" } },
-            { shortName: { contains: filters.q, mode: "insensitive" } },
-            { city: { contains: filters.q, mode: "insensitive" } },
-            { tagline: { contains: filters.q, mode: "insensitive" } },
-          ],
-        }
-      : {}),
-  };
+  const where = await buildOrganizationWhere(filters);
 
   const orderBy: Prisma.OrganizationOrderByWithRelationInput[] =
     filters.sort === "newest"
@@ -136,42 +144,55 @@ export function buildEventWhere(filters: EventFilters): Prisma.EventWhereInput {
   const from = filters.from;
   const to = filters.to;
 
-  // Eine Veranstaltung gilt als „kommend“, solange ihr Ende in der Zukunft liegt.
-  const notPast: Prisma.EventWhereInput = {
-    OR: [{ endDate: { gte: today } }, { endDate: null, startDate: { gte: today } }],
-  };
+  /**
+   * Alle Teilbedingungen landen in dieser Liste und werden am Ende mit `AND`
+   * verknüpft.
+   *
+   * Früher wurden sie in ein einzelnes Objektliteral gespreizt. Mehrere davon
+   * brauchen aber den Schlüssel `OR` – die Suche, der Zeitraum und der Filter
+   * auf kommende Termine. In einem Objektliteral gewinnt der letzte gleiche
+   * Schlüssel, alle vorherigen verschwinden ohne Fehlermeldung. In der Agenda
+   * traf das genau die Suche: Sie stand vor dem Filter auf kommende Termine
+   * und wurde deshalb bei jeder Anfrage verworfen. Die Adresse enthielt den
+   * Suchbegriff, die Trefferliste zeigte trotzdem alle Veranstaltungen.
+   */
+  const bedingungen: Prisma.EventWhereInput[] = [];
 
-  const range: Prisma.EventWhereInput[] = [];
-  if (from) range.push({ OR: [{ endDate: { gte: from } }, { endDate: null, startDate: { gte: from } }] });
-  if (to) range.push({ startDate: { lte: to } });
+  if (filters.type) bedingungen.push({ type: filters.type });
+  if (filters.canton) bedingungen.push({ canton: { slug: filters.canton } });
+  if (filters.region) bedingungen.push({ canton: { region: filters.region } });
+  if (filters.city) bedingungen.push({ city: { contains: filters.city, mode: "insensitive" } });
+
+  if (filters.organizationSlug || filters.organizationType) {
+    bedingungen.push({
+      organization: {
+        status: "PUBLISHED",
+        ...(filters.organizationSlug ? { slug: filters.organizationSlug } : {}),
+        ...(filters.organizationType ? { type: filters.organizationType } : {}),
+      },
+    });
+  }
+
+  const suche = filters.q ? eventSearchWhere(filters.q) : null;
+  if (suche) bedingungen.push(suche);
+
+  // Eine Veranstaltung gilt als „kommend“, solange ihr Ende in der Zukunft liegt.
+  if (filters.upcomingOnly) {
+    bedingungen.push({
+      OR: [{ endDate: { gte: today } }, { endDate: null, startDate: { gte: today } }],
+    });
+  }
+
+  if (from) {
+    bedingungen.push({
+      OR: [{ endDate: { gte: from } }, { endDate: null, startDate: { gte: from } }],
+    });
+  }
+  if (to) bedingungen.push({ startDate: { lte: to } });
 
   return {
     ...publishedEventWhere,
-    ...(filters.type ? { type: filters.type } : {}),
-    ...(filters.canton ? { canton: { slug: filters.canton } } : {}),
-    ...(filters.region ? { canton: { region: filters.region } } : {}),
-    ...(filters.city ? { city: { contains: filters.city, mode: "insensitive" } } : {}),
-    ...(filters.organizationSlug || filters.organizationType
-      ? {
-          organization: {
-            status: "PUBLISHED",
-            ...(filters.organizationSlug ? { slug: filters.organizationSlug } : {}),
-            ...(filters.organizationType ? { type: filters.organizationType } : {}),
-          },
-        }
-      : {}),
-    ...(filters.q
-      ? {
-          OR: [
-            { title: { contains: filters.q, mode: "insensitive" } },
-            { shortDescription: { contains: filters.q, mode: "insensitive" } },
-            { city: { contains: filters.q, mode: "insensitive" } },
-            { venueName: { contains: filters.q, mode: "insensitive" } },
-          ],
-        }
-      : {}),
-    ...(filters.upcomingOnly ? notPast : {}),
-    ...(range.length ? { AND: range } : {}),
+    ...(bedingungen.length ? { AND: bedingungen } : {}),
   };
 }
 
@@ -269,23 +290,17 @@ export async function platformCounts() {
 
 /** Globale Suche über Organisationen, Veranstaltungen und Orte. */
 export async function globalSearch(term: string) {
-  const q = term.trim();
+  const q = normalizeSearchTerm(term);
   if (q.length < 2) {
     return { carnivals: [], guggen: [], events: [], cantons: [], total: 0 };
   }
 
+  // Dieselbe Feldliste wie in den Verzeichnissen – siehe lib/search.ts.
+  const orgSuche = await organizationSearchWhere(q);
+
   const [organizations, events, cantons] = await Promise.all([
     prisma.organization.findMany({
-      where: {
-        ...publishedOrgWhere,
-        OR: [
-          { name: { contains: q, mode: "insensitive" } },
-          { shortName: { contains: q, mode: "insensitive" } },
-          { city: { contains: q, mode: "insensitive" } },
-          { tagline: { contains: q, mode: "insensitive" } },
-          { shortDescription: { contains: q, mode: "insensitive" } },
-        ],
-      },
+      where: { ...publishedOrgWhere, ...(orgSuche ? { AND: [orgSuche] } : {}) },
       select: PUBLIC_ORG_SELECT,
       orderBy: [{ isFeatured: "desc" }, { name: "asc" }],
       take: 24,

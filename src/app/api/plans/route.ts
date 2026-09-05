@@ -2,7 +2,7 @@ import { handleApiError, jsonOk, parseBody } from "@/lib/api";
 import { logAudit } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/rbac";
-import { planSchema } from "@/lib/validation/schemas";
+import { planSchema, sortOrderSchema } from "@/lib/validation/schemas";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +24,7 @@ export async function POST(request: Request) {
                   enabled: f.enabled,
                   limit: f.limit,
                   note: f.note,
+                  value: f.value,
                 })),
               },
             }
@@ -43,6 +44,32 @@ export async function POST(request: Request) {
     });
 
     return jsonOk(plan, 201);
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
+
+/** Reihenfolge mehrerer Tarife in einem Zug setzen. */
+export async function PATCH(request: Request) {
+  try {
+    const actor = await requirePermission("managePlans");
+    const { order } = await parseBody(request, sortOrderSchema);
+
+    await prisma.$transaction(
+      order.map((eintrag) =>
+        prisma.plan.update({ where: { id: eintrag.id }, data: { sortOrder: eintrag.sortOrder } }),
+      ),
+    );
+
+    await logAudit({
+      userId: actor.id,
+      userLabel: actor.email,
+      action: "plan.reorder",
+      entity: "Plan",
+      after: { anzahl: order.length },
+    });
+
+    return jsonOk({ ok: true });
   } catch (error) {
     return handleApiError(error);
   }

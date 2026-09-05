@@ -52,7 +52,12 @@ export function dashboardNavigation(role: Role): NavGroup[] {
           { href: "/dashboard/abonnemente", label: "Abonnemente", icon: "badge" },
           // Zahlungen sind eine kaufmännische Funktion und nur für ADMIN.
           ...(isAdmin(role)
-            ? [{ href: "/dashboard/zahlungen", label: "Zahlungen", icon: "wallet" }]
+            ? [
+                { href: "/dashboard/zahlungen", label: "Zahlungen", icon: "wallet" },
+                // Preise bestimmen, was auf der öffentlichen Preisseite steht,
+                // und schalten Funktionen frei – deshalb nur für ADMIN.
+                { href: "/dashboard/preise", label: "Preise", icon: "tag" },
+              ]
             : []),
           { href: "/dashboard/tickets", label: "Tickets", icon: "ticket" },
           { href: "/dashboard/werbung", label: "Werbung", icon: "megaphone" },

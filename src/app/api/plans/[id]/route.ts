@@ -40,6 +40,7 @@ export async function PATCH(request: Request, { params }: Params) {
               enabled: f.enabled,
               limit: f.limit,
               note: f.note,
+              value: f.value,
             })),
           });
         }

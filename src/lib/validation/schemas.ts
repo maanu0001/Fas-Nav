@@ -440,6 +440,22 @@ export const paymentMethodEnum = z.enum([
   "OTHER",
 ]);
 
+/**
+ * Ziel des Knopfes auf der Preisseite.
+ *
+ * Erlaubt sind ein Pfad innerhalb der Seite oder eine vollständige http(s)-Adresse.
+ * Alles andere wird abgewiesen – insbesondere `javascript:`, das sonst über die
+ * Preisverwaltung in einen Link auf der öffentlichen Seite gelangen könnte.
+ */
+export const ctaUrlField = z
+  .union([z.string(), z.null(), z.undefined()])
+  .transform((v) => (v === null || v === undefined || v.trim() === "" ? null : v.trim()))
+  .refine(
+    (v) => v === null || v.startsWith("/") || /^https?:\/\//i.test(v),
+    "Bitte einen Pfad wie /kontakt oder eine vollständige http(s)-Adresse angeben.",
+  )
+  .refine((v) => v === null || v.length <= 300, "Die Adresse ist zu lang.");
+
 export const planSchema = z.object({
   key: z
     .string()
@@ -452,7 +468,15 @@ export const planSchema = z.object({
   name: requiredText(80, "Name"),
   description: optionalText(600),
   priceChf: decimalAmount,
+  currency: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .regex(/^[A-Z]{3}$/, "Bitte einen dreibuchstabigen Währungscode angeben, z. B. CHF.")
+    .default("CHF"),
   billingInterval: billingIntervalEnum.default("YEARLY"),
+  ctaText: optionalText(60),
+  ctaUrl: ctaUrlField,
   isActive: z.boolean().default(true),
   isPublic: z.boolean().default(true),
   isRecommended: z.boolean().default(false),
@@ -465,9 +489,30 @@ export const planSchema = z.object({
         enabled: z.boolean().default(true),
         limit: optionalInt(0, 100000),
         note: optionalText(120),
+        /** Freitext für die Vergleichstabelle, z. B. „Unlimitiert“. */
+        value: optionalText(60),
       }),
     )
     .optional(),
+});
+
+/** Eine Zeile der Vergleichstabelle. */
+export const featureSchema = z.object({
+  key: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .min(2)
+    .max(40)
+    .regex(/^[a-z0-9_]+$/, "Nur Kleinbuchstaben, Zahlen und Unterstriche."),
+  name: requiredText(80, "Bezeichnung"),
+  description: optionalText(300),
+  sortOrder: z.coerce.number().int().min(0).max(999).default(0),
+});
+
+/** Neue Reihenfolge für Tarife oder Leistungen. */
+export const sortOrderSchema = z.object({
+  order: z.array(z.object({ id: cuid, sortOrder: z.coerce.number().int().min(0).max(999) })).max(200),
 });
 
 export const subscriptionUpdateSchema = z.object({

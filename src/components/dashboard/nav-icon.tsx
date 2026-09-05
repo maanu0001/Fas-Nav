@@ -8,6 +8,7 @@ import {
   Megaphone,
   ScrollText,
   Settings,
+  Tag,
   Ticket,
   TrendingUp,
   Upload,
@@ -30,6 +31,7 @@ const ICONS = {
   upload: Upload,
   scroll: ScrollText,
   settings: Settings,
+  tag: Tag,
 } as const;
 
 export function NavIcon({ name, className }: { name: string; className?: string }) {

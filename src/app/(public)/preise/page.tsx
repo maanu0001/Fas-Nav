@@ -6,7 +6,13 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/states";
 import { prisma } from "@/lib/prisma";
 import { buildMetadata } from "@/lib/seo";
-import { formatChf, cn } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import {
+  BILLING_INTERVAL_SUFFIX,
+  defaultCtaText,
+  defaultCtaUrl,
+  formatPlanPrice,
+} from "@/lib/pricing";
 import { getSiteSettings, settingString } from "@/lib/queries/homepage";
 
 export const dynamic = "force-dynamic";
@@ -19,14 +25,9 @@ export const metadata: Metadata = buildMetadata({
   keywords: ["Fasnacht Verein Website", "Guggenmusik Profil", "Fas-Nav Preise"],
 });
 
-const INTERVAL_LABEL: Record<string, string> = {
-  YEARLY: "/ Jahr",
-  MONTHLY: "/ Monat",
-  ONE_TIME: "einmalig",
-};
-
 export default async function PricingPage() {
-  const [plans, settings] = await Promise.all([
+  // Nur aktive und öffentliche Tarife, in der vom Admin gesetzten Reihenfolge.
+  const [plans, vergleichszeilen, settings] = await Promise.all([
     prisma.plan.findMany({
       where: { isActive: true, isPublic: true },
       include: {
@@ -35,19 +36,16 @@ export default async function PricingPage() {
           orderBy: { feature: { sortOrder: "asc" } },
         },
       },
-      orderBy: { sortOrder: "asc" },
+      orderBy: [{ sortOrder: "asc" }, { priceChf: "asc" }],
     }),
+    // Die Zeilen der Vergleichstabelle sind die erfassten Leistungen – auch
+    // solche, die in keinem Tarif enthalten sind. Sonst könnte der Admin keine
+    // Zeile anlegen, die überall einen Strich zeigt.
+    prisma.feature.findMany({ orderBy: [{ sortOrder: "asc" }, { name: "asc" }] }),
     getSiteSettings(),
   ]);
 
-  // Vergleichsmatrix über alle in den Tarifen vorkommenden Funktionen.
-  const allFeatures = Array.from(
-    new Map(
-      plans
-        .flatMap((plan) => plan.features.map((pf) => pf.feature))
-        .map((feature) => [feature.id, feature]),
-    ).values(),
-  ).sort((a, b) => a.sortOrder - b.sortOrder);
+  const allFeatures = vergleichszeilen;
 
   return (
     <>
@@ -107,11 +105,13 @@ export default async function PricingPage() {
 
                   <p className="mt-5 flex items-baseline gap-1.5">
                     <span className="font-display text-4xl font-extrabold text-primary-900">
-                      {Number(plan.priceChf) === 0 ? "Gratis" : formatChf(Number(plan.priceChf))}
+                      {Number(plan.priceChf) === 0
+                        ? "Gratis"
+                        : formatPlanPrice(Number(plan.priceChf), plan.currency)}
                     </span>
                     {Number(plan.priceChf) > 0 ? (
                       <span className="text-sm text-muted-foreground">
-                        {INTERVAL_LABEL[plan.billingInterval] ?? ""}
+                        {BILLING_INTERVAL_SUFFIX[plan.billingInterval]}
                       </span>
                     ) : null}
                   </p>
@@ -130,7 +130,9 @@ export default async function PricingPage() {
                           <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" aria-hidden />
                           <span className="text-slate-700">
                             {pf.feature.name}
-                            {pf.limit !== null ? (
+                            {pf.value ? (
+                              <span className="text-muted-foreground"> ({pf.value})</span>
+                            ) : pf.limit !== null ? (
                               <span className="text-muted-foreground"> (bis {pf.limit})</span>
                             ) : null}
                             {pf.note ? (
@@ -142,13 +144,13 @@ export default async function PricingPage() {
                   </ul>
 
                   <ButtonLink
-                    href={`/organisation-eintragen?plan=${plan.key}`}
+                    href={plan.ctaUrl ?? defaultCtaUrl(plan.key)}
                     variant={plan.isRecommended ? "accent" : "primary"}
                     block
                     size="lg"
                     className="mt-7"
                   >
-                    {Number(plan.priceChf) === 0 ? "Kostenlos starten" : "Jetzt eintragen"}
+                    {plan.ctaText ?? defaultCtaText(Number(plan.priceChf))}
                   </ButtonLink>
                 </div>
               ))}
@@ -164,7 +166,10 @@ export default async function PricingPage() {
                     <caption className="sr-only">Vergleich der verfügbaren Tarife</caption>
                     <thead className="bg-muted/60">
                       <tr>
-                        <th scope="col" className="px-4 py-3 text-left font-semibold">
+                        <th
+                          scope="col"
+                          className="sticky left-0 z-10 bg-muted/60 px-4 py-3 text-left font-semibold backdrop-blur"
+                        >
                           Funktion
                         </th>
                         {plans.map((plan) => (
@@ -177,7 +182,10 @@ export default async function PricingPage() {
                     <tbody>
                       {allFeatures.map((feature) => (
                         <tr key={feature.id} className="border-t border-border">
-                          <th scope="row" className="px-4 py-3 text-left font-medium text-slate-700">
+                          <th
+                            scope="row"
+                            className="sticky left-0 z-10 bg-card px-4 py-3 text-left font-medium text-slate-700"
+                          >
                             {feature.name}
                             {feature.description ? (
                               <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
@@ -189,7 +197,15 @@ export default async function PricingPage() {
                             const pf = plan.features.find((f) => f.featureId === feature.id);
                             return (
                               <td key={plan.id} className="px-4 py-3 text-center">
-                                {pf?.enabled ? (
+                                {/*
+                                  Der Zustand steht nie allein in der Farbe: Ein
+                                  Häkchen oder ein Strich trägt zusätzlich eine
+                                  Beschriftung für Hilfsmittel, ein Freitext
+                                  spricht ohnehin für sich.
+                                */}
+                                {pf?.value ? (
+                                  <span className="font-medium text-primary-800">{pf.value}</span>
+                                ) : pf?.enabled ? (
                                   pf.limit !== null ? (
                                     <span className="font-medium text-primary-800">
                                       bis {pf.limit}

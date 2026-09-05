@@ -738,7 +738,13 @@ model Plan {
   name            String
   description     String?         @db.Text
   priceChf        Decimal         @db.Decimal(10, 2)
+  /// Währungscode für die Anzeige. Die Beträge liegen weiterhin in priceChf.
+  currency        String          @default("CHF")
   billingInterval BillingInterval @default(YEARLY)
+  /// Beschriftung des Knopfes auf der Preisseite. Leer = Standardtext.
+  ctaText         String?
+  /// Ziel des Knopfes. Leer = Eintragsformular mit diesem Tarif.
+  ctaUrl          String?
   isActive        Boolean         @default(true)
   isPublic        Boolean         @default(true)
   isRecommended   Boolean         @default(false)
@@ -777,6 +783,9 @@ model PlanFeature {
   /// Numerisches Limit, null = unbegrenzt
   limit     Int?
   note      String?
+  /// Freitext für die Vergleichstabelle, z. B. "Unlimitiert" oder "Basis".
+  /// Reine Anzeige – über den Zugriff entscheiden weiterhin enabled und limit.
+  value     String?
 
   @@unique([planId, featureId])
   @@map("plan_features")
