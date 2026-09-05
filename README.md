@@ -567,6 +567,48 @@ bleibt. Das Logo ist für hellen Grund gezeichnet; auf der dunklen Markenfläche
 der Anmeldeseite steht es auf einer ruhigen hellen Trägerfläche, damit seine
 Navy-Buchstaben nicht verschwinden und die Gestaltung unverändert bleibt.
 
+## Wartungsmodus
+
+Unter *Dashboard → Einstellungen* lässt sich die Website vorübergehend sperren.
+Der Schalter und die Nachricht liegen im vorhandenen Schlüssel-Wert-Speicher
+`SiteSetting` (`maintenance_enabled`, `maintenance_message`); dafür war keine
+Schemaänderung nötig. Ohne Eintrag gilt der Wartungsmodus als **aus**.
+
+Geprüft wird serverseitig in den Layouts des öffentlichen Bereichs und des
+Dashboards. Damit greift die Sperre auch bei abgeschaltetem JavaScript und bei
+direkt eingegebenen Adressen wie `/fasnacht/[slug]`. Die Wartungsseite wird
+*gerendert* statt angesteuert – so kann keine Weiterleitungsschleife entstehen.
+
+Während der Wartung arbeitet ausschliesslich `ADMIN` normal weiter; ein Login
+allein hebt die Sperre also nicht auf. Anmeldung und Auth-Endpunkte bleiben
+erreichbar, damit sich die Administration anmelden und den Wartungsmodus wieder
+ausschalten kann.
+
+## QR-Codes
+
+Jede Organisation hat unter *Dashboard → QR-Code* einen QR-Code auf ihre
+öffentliche Seite. Die Codes werden bei jedem Abruf aus der kanonischen Adresse
+berechnet und nicht als Bilddateien gespeichert; ein geänderter Slug wirkt
+sofort.
+
+Der Zielkatalog steht in `src/lib/qr.ts` – ein weiteres Ziel ist ein
+zusätzlicher Eintrag:
+
+| Ziel | Adresse | Voraussetzung |
+| --- | --- | --- |
+| Organisationsseite | `/fasnacht/[slug]` bzw. `/gugge/[slug]` | keine |
+| Programm | `…#programm` | Tarifmerkmal `program` |
+| Tagesprogramm und Termine | `…#agenda` | Tarifmerkmal `events` |
+| Galerie | `…#galerie` | Tarifmerkmal `gallery` |
+
+Abgebildet werden nur Seiten, die es tatsächlich gibt. Eine öffentliche Karte
+existiert derzeit nicht und fehlt deshalb im Katalog.
+
+Der Endpunkt `/api/organizations/[id]/qr` prüft zuerst den Zugriff auf die
+Organisation und danach das Tarifmerkmal. Ein ausgeblendeter Knopf ist
+ausdrücklich nicht die Schutzschicht: Ein direkter Aufruf ohne passendes
+Abonnement endet mit HTTP 403.
+
 ## Sicherheit
 
 * **Serverseitige Rechteprüfung.** Jeder schreibende Endpoint prüft

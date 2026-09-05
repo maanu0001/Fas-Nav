@@ -34,10 +34,11 @@ export const metadata: Metadata = {
   publisher: SITE.name,
   formatDetection: { telephone: false },
   icons: {
-    // Das Signet ist als SVG hinterlegt, damit es in jeder Grösse scharf
-    // bleibt; die PNG-Fassungen bedienen Browser und Systeme ohne SVG-Icons.
+    // Alle Icons stammen aus dem offiziellen Logo: für kleine Flächen auf den
+    // Bereich der Buchstaben FN beschnitten, damit möglichst viel davon
+    // erkennbar bleibt.
     icon: [
-      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/icon.png", type: "image/png", sizes: "64x64" },
       { url: "/brand/icon-192.png", type: "image/png", sizes: "192x192" },
       { url: "/brand/icon-512.png", type: "image/png", sizes: "512x512" },
     ],

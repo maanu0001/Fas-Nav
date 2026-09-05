@@ -5,8 +5,7 @@ import { MapPin, Music2, PartyPopper, Search } from "lucide-react";
 import { EventListItem } from "@/components/public/event-card";
 import { OrganizationCard } from "@/components/public/organization-card";
 import { EmptyState } from "@/components/ui/states";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { LiveSearchInput } from "@/components/public/live-search-input";
 import { globalSearch } from "@/lib/queries/public";
 import { logSearch } from "@/lib/analytics";
 import { buildMetadata } from "@/lib/seo";
@@ -78,26 +77,12 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
     <div className="container py-10 sm:py-14">
       <h1 className="font-display text-3xl font-bold sm:text-4xl">Suche</h1>
 
-      <form action="/suche" method="get" className="mt-6 flex max-w-2xl gap-2" role="search">
-        <div className="relative flex-1">
-          <Search
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-            aria-hidden
-          />
-          <Input
-            type="search"
-            name="q"
-            defaultValue={term}
-            placeholder="Fasnacht, Gugge, Veranstaltung oder Ort …"
-            aria-label="Suchbegriff"
-            className="h-12 pl-9"
-            autoFocus
-          />
-        </div>
-        <Button type="submit" size="lg">
-          Suchen
-        </Button>
-      </form>
+      {/* Die Ergebnisse folgen der Eingabe; ein Suchknopf ist nicht nötig. */}
+      <LiveSearchInput
+        className="mt-6 max-w-2xl"
+        placeholder="Fasnacht, Gugge, Veranstaltung oder Ort …"
+        autoFocus
+      />
 
       {!results ? (
         <p className="mt-8 text-sm text-muted-foreground">

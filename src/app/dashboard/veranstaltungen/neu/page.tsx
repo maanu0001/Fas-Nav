@@ -4,30 +4,51 @@ import { redirect } from "next/navigation";
 import { EventForm } from "@/components/dashboard/event-form";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { FEATURE_KEYS } from "@/lib/constants";
-import { requireOrganizationContext } from "@/lib/dashboard-context";
+import { getDashboardContext, requireOrganizationAccessPage } from "@/lib/dashboard-context";
 import { prisma } from "@/lib/prisma";
-import { withinLimit } from "@/lib/subscription";
+import { getSubscription, withinLimit } from "@/lib/subscription";
 import { toDateTimeInputValue } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = { title: "Neue Veranstaltung" };
 
-export default async function NewEventPage() {
-  const context = await requireOrganizationContext();
+type SearchParams = Promise<Record<string, string | undefined>>;
 
-  const [organization, cantons, count] = await Promise.all([
+export default async function NewEventPage({ searchParams }: { searchParams: SearchParams }) {
+  const params = await searchParams;
+  const base = await getDashboardContext();
+
+  /*
+   * Für welche Organisation wird erfasst?
+   *
+   * Organisationskonten erfassen immer für ihre aktive Organisation. Admin und
+   * Team dürfen für jede Organisation erfassen und geben sie über den
+   * Adressparameter an. Massgeblich ist in beiden Fällen
+   * requireOrganizationAccess – die Angabe aus der Adresse wird also geprüft
+   * und nicht einfach übernommen.
+   */
+  const gewuenscht = params.organisation ?? base.organization?.id ?? null;
+  if (!gewuenscht) {
+    redirect(base.staff ? "/dashboard/organisationen" : "/dashboard/keine-organisation");
+  }
+
+  const access = await requireOrganizationAccessPage(gewuenscht, "edit");
+  const organizationId = access.organizationId;
+
+  const [organization, cantons, count, subscription] = await Promise.all([
     prisma.organization.findUnique({
-      where: { id: context.organization.id },
+      where: { id: organizationId },
       select: { city: true, cantonId: true, zip: true, street: true },
     }),
     prisma.canton.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
-    prisma.event.count({ where: { organizationId: context.organization.id } }),
+    prisma.event.count({ where: { organizationId } }),
+    getSubscription(organizationId),
   ]);
 
   // Limitprüfung auch beim Aufruf der Seite – nicht erst beim Speichern.
-  const check = withinLimit(context.subscription, FEATURE_KEYS.EVENTS, count);
-  if (!check.allowed) redirect("/dashboard/veranstaltungen");
+  const check = withinLimit(subscription, FEATURE_KEYS.EVENTS, count);
+  if (!check.allowed) redirect(base.staff ? "/dashboard/agenda" : "/dashboard/veranstaltungen");
 
   // Vorschlag: Beginn morgen um 14 Uhr – spart Tipparbeit.
   const suggested = new Date();
@@ -46,7 +67,7 @@ export default async function NewEventPage() {
       />
 
       <EventForm
-        organizationId={context.organization.id}
+        organizationId={organizationId}
         cantons={cantons}
         canDelete={false}
         initial={{

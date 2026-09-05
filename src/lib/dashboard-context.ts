@@ -8,6 +8,8 @@ import {
   can,
   isAdmin,
   isStaff,
+  resolveOrganizationAccess,
+  type OrgAccess,
   type OrgCapability,
   type PermissionKey,
 } from "@/lib/rbac";
@@ -158,6 +160,22 @@ export async function requireAdminPage(): Promise<DashboardContext> {
   const context = await getDashboardContext();
   if (!isAdmin(context.user.role as Role)) redirect(DENIED);
   return context;
+}
+
+/**
+ * Zugriff auf eine Organisation für eine Seite.
+ *
+ * Anders als requireOrganizationAccess wird hier nicht geworfen, sondern auf
+ * die Hinweisseite umgeleitet. Ein Aufruf mit fremder Kennung endet damit als
+ * saubere Abweisung statt als Serverfehler.
+ */
+export async function requireOrganizationAccessPage(
+  organizationId: string,
+  capability: OrgCapability = "view",
+): Promise<OrgAccess> {
+  const result = await resolveOrganizationAccess(organizationId, capability);
+  if (!result.ok) redirect(result.status === 401 ? "/login" : DENIED);
+  return result.access;
 }
 
 export async function requirePermissionPage(

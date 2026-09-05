@@ -3,10 +3,12 @@ import type { Metadata } from "next";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { PasswordChangeForm } from "@/components/dashboard/password-change-form";
+import { MaintenanceSettings } from "@/components/dashboard/maintenance-settings";
 import { PlatformSettingsForm } from "@/components/dashboard/platform-settings-form";
 import { ROLE_LABELS } from "@/lib/constants";
 import { getDashboardContext } from "@/lib/dashboard-context";
 import { prisma } from "@/lib/prisma";
+import { getMaintenanceState } from "@/lib/maintenance";
 import { isAdmin } from "@/lib/rbac";
 import type { Role } from "@prisma/client";
 
@@ -21,6 +23,10 @@ export default async function SettingsPage() {
   const settings = admin
     ? await prisma.siteSetting.findMany({ orderBy: [{ group: "asc" }, { key: "asc" }] })
     : [];
+
+  // Der Wartungsmodus gehört zu den Einstellungen, wird aber als eigener
+  // Abschnitt geführt: Er wirkt sofort auf die gesamte Website.
+  const maintenance = admin ? await getMaintenanceState() : null;
 
   return (
     <>
@@ -51,6 +57,10 @@ export default async function SettingsPage() {
           <h2 className="mb-4 font-display text-base font-semibold">Passwort ändern</h2>
           <PasswordChangeForm />
         </Card>
+
+        {admin && maintenance ? (
+          <MaintenanceSettings enabled={maintenance.enabled} message={maintenance.message} />
+        ) : null}
 
         {admin ? (
           <Card className="p-5">

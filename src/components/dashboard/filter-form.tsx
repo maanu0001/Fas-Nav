@@ -1,11 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Search, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/input";
+import { useLiveSearch } from "@/lib/use-live-search";
 import { cn } from "@/lib/utils";
 
 export type DashboardFilter = {
@@ -25,22 +25,8 @@ export function DashboardFilters({
   searchPlaceholder?: string;
   className?: string;
 }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const [term, setTerm] = React.useState(searchParams.get("q") ?? "");
-
-  React.useEffect(() => {
-    setTerm(searchParams.get("q") ?? "");
-  }, [searchParams]);
-
-  function apply(name: string, value: string) {
-    const params = new URLSearchParams(searchParams.toString());
-    if (value) params.set(name, value);
-    else params.delete(name);
-    params.delete("page");
-    router.push(`${pathname}?${params.toString()}`, { scroll: false });
-  }
+  // Die Suche greift beim Tippen; siehe useLiveSearch.
+  const { term, setTerm, applyParam: apply, reset, searchParams } = useLiveSearch();
 
   const hasActive =
     Boolean(searchParams.get("q")) || filters.some((f) => searchParams.get(f.name));
@@ -48,14 +34,7 @@ export function DashboardFilters({
   return (
     <div className={cn("mb-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end", className)}>
       {searchPlaceholder ? (
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            apply("q", term.trim());
-          }}
-          className="relative min-w-0 flex-1 sm:max-w-xs"
-          role="search"
-        >
+        <div className="relative min-w-0 flex-1 sm:max-w-xs" role="search">
           <Search
             className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
             aria-hidden
@@ -68,7 +47,7 @@ export function DashboardFilters({
             aria-label="Suchen"
             className="pl-9"
           />
-        </form>
+        </div>
       ) : null}
 
       {filters.map((filter) => (
@@ -93,7 +72,7 @@ export function DashboardFilters({
       {hasActive ? (
         <Button
           variant="ghost"
-          onClick={() => router.push(pathname, { scroll: false })}
+          onClick={() => reset(filters.map((f) => f.name))}
           className="sm:mb-0"
         >
           <X />

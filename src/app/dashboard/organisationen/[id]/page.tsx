@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { CalendarPlus } from "lucide-react";
+
+import { ButtonLink } from "@/components/ui/button";
 
 import { OrganizationEditor } from "@/components/dashboard/editor/organization-editor";
 import { OrganizationAdminPanel } from "@/components/dashboard/organization-admin-panel";
@@ -104,6 +107,16 @@ export default async function AdminOrganizationPage({ params }: Params) {
           { href: "/dashboard/organisationen", label: "Organisationen" },
           { label: organization.name },
         ]}
+        actions={
+          // Admin und Team dürfen für jede Organisation Termine erfassen.
+          <ButtonLink
+            href={`/dashboard/veranstaltungen/neu?organisation=${organization.id}`}
+            variant="outline"
+          >
+            <CalendarPlus />
+            Veranstaltung erfassen
+          </ButtonLink>
+        }
       />
 
       <OrganizationAdminPanel

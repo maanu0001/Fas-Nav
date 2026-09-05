@@ -6,7 +6,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { EventForm } from "@/components/dashboard/event-form";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { prisma } from "@/lib/prisma";
-import { requireOrgAccess } from "@/lib/rbac";
+import { requireOrganizationAccessPage } from "@/lib/dashboard-context";
 import { toDateTimeInputValue } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
@@ -55,7 +55,9 @@ export default async function EditEventPage({ params }: Params) {
   if (!event) notFound();
 
   // Zugriffsprüfung über die Organisation der Veranstaltung.
-  await requireOrgAccess(event.organizationId);
+  // Umleitung statt Fehler: Ein Aufruf mit fremder Kennung soll auf der
+  // Hinweisseite enden und nicht als Serverfehler.
+  await requireOrganizationAccessPage(event.organizationId);
 
   const cantons = await prisma.canton.findMany({
     select: { id: true, name: true },

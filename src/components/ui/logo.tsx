@@ -1,67 +1,53 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import { cn } from "@/lib/utils";
 
+/** Das offizielle Fas-Nav-Logo, ohne weissen Hintergrund. */
+export const LOGO_SRC = "/brand/fas-nav-logo-transparent.png";
+
 /**
- * FN-Signet aus dem Fas-Nav-Logo.
+ * Das offizielle Logo als kompaktes Zeichen.
  *
- * Das vollständige Logo ist für kleine Flächen zu fein gezeichnet. Dieses
- * Zeichen übernimmt daraus die Buchstabenform und die drei Fasnachtsfarben.
- * Es wird bewusst als eingebettetes SVG gezeichnet und nicht als Bilddatei
- * geladen: So folgt die Trägerfläche der Variante und das Zeichen bleibt auf
- * hellem wie dunklem Grund erkennbar.
+ * Verwendet wird ausschliesslich die gelieferte Bilddatei; es gibt keine
+ * nachgezeichnete Fassung. Das Logo ist für hellen Grund gestaltet, seine
+ * Buchstaben sind dunkles Navy. Damit es auf dunklen Markenflächen – Kopf-
+ * zeile im dunklen Modus, Seitenleiste, Fusszeile – nicht verschwindet, steht
+ * es dort auf einer ruhigen hellen Trägerfläche. Das ist eine gestalterische
+ * Fassung des Logos, keine Veränderung: Farben und Proportionen bleiben.
+ *
+ * "object-contain" mit quadratischem Rahmen hält das Seitenverhältnis; das
+ * Logo wird nie verzerrt.
  */
 export function LogoMark({
   className,
   variant = "dark",
 }: {
   className?: string;
-  /** dark: Navy-Fläche · light: helle Fläche für dunklen Grund · plain: ohne Fläche */
+  /** dark: heller Grund vorhanden · light: eigene helle Fläche für dunklen Grund */
   variant?: "dark" | "light" | "plain";
 }) {
-  const tile =
-    variant === "dark" ? "#0B1A30" : variant === "light" ? "#F2F6FB" : "transparent";
-  const letters = variant === "dark" ? "#F7FAFC" : variant === "light" ? "#0B1A30" : "currentColor";
+  const aufHellemGrund = variant === "dark";
 
   return (
-    <svg
-      viewBox="0 0 64 64"
-      className={cn("shrink-0", className)}
-      aria-hidden
-      focusable="false"
-    >
-      {variant === "plain" ? (
-        <rect
-          x="1"
-          y="1"
-          width="62"
-          height="62"
-          rx="13"
-          fill="none"
-          stroke="currentColor"
-          strokeOpacity="0.25"
-          strokeWidth="2"
-        />
-      ) : (
-        <rect width="64" height="64" rx="14" fill={tile} />
+    <span
+      className={cn(
+        "inline-flex shrink-0 items-center justify-center overflow-hidden rounded-xl",
+        // Auf dunklem Grund trägt eine helle Fläche das Logo.
+        aufHellemGrund ? "bg-transparent" : "bg-white/95 p-1 ring-1 ring-white/25",
+        className,
       )}
-
-      <g fill={letters}>
-        <rect x="12" y="18" width="7" height="28" rx="1" />
-        <rect x="12" y="18" width="18" height="6.5" rx="1" />
-        <rect x="12" y="28.5" width="15" height="6" rx="1" />
-        <rect x="34" y="18" width="7" height="28" rx="1" />
-        <rect x="47" y="18" width="7" height="28" rx="1" />
-        <polygon points="34,18 41,18 54,46 47,46" />
-      </g>
-
-      {/* Rot, Gold und Blau des Logos als Akzentkante. */}
-      <g>
-        <rect x="12" y="50" width="14" height="4" rx="2" fill="#C2171F" />
-        <rect x="27" y="50" width="14" height="4" rx="2" fill="#FEAA19" />
-        <rect x="42" y="50" width="12" height="4" rx="2" fill="#0279AD" />
-      </g>
-    </svg>
+      aria-hidden
+    >
+      <Image
+        src={LOGO_SRC}
+        alt=""
+        width={128}
+        height={128}
+        className="h-full w-full object-contain"
+        priority
+      />
+    </span>
   );
 }
 
@@ -82,7 +68,7 @@ export function Logo({
       className={cn("group inline-flex items-center gap-2.5", className)}
       aria-label="Fas-Nav.ch – Startseite"
     >
-      <LogoMark className="h-9 w-9" variant={variant} />
+      <LogoMark className="h-10 w-10" variant={variant} />
       {showWordmark ? (
         <span className="flex flex-col leading-none">
           <span

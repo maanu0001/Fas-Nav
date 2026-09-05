@@ -1,11 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/input";
+import { useLiveSearch } from "@/lib/use-live-search";
 import { cn } from "@/lib/utils";
 
 export type FilterOption = { value: string; label: string };
@@ -34,51 +34,22 @@ export function FilterBar({
   extra?: React.ReactNode;
   className?: string;
 }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
   const [open, setOpen] = React.useState(false);
-  const [term, setTerm] = React.useState(searchParams.get("q") ?? "");
-
-  React.useEffect(() => {
-    setTerm(searchParams.get("q") ?? "");
-  }, [searchParams]);
-
-  const applyParam = React.useCallback(
-    (name: string, value: string) => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (value) params.set(name, value);
-      else params.delete(name);
-      params.delete("page"); // Filterwechsel springt zurück auf Seite 1.
-      router.push(`${pathname}?${params.toString()}`, { scroll: false });
-    },
-    [pathname, router, searchParams],
-  );
-
-  function onSubmit(event: React.FormEvent) {
-    event.preventDefault();
-    applyParam("q", term.trim());
-  }
+  // Die Suche greift beim Tippen; siehe useLiveSearch.
+  const { term, setTerm, applyParam, reset: resetParams, searchParams } = useLiveSearch();
 
   const activeFilters = filters.filter((f) => searchParams.get(f.name));
   const hasActive = activeFilters.length > 0 || Boolean(searchParams.get("q"));
 
   function reset() {
-    const params = new URLSearchParams(searchParams.toString());
-    for (const filter of filters) params.delete(filter.name);
-    params.delete("q");
-    params.delete("page");
-    setTerm("");
-    router.push(params.toString() ? `${pathname}?${params.toString()}` : pathname, {
-      scroll: false,
-    });
+    resetParams(filters.map((f) => f.name));
   }
 
   return (
     <div className={cn("rounded-xl border border-border bg-card p-4 shadow-subtle", className)}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         {showSearch ? (
-          <form onSubmit={onSubmit} className="relative flex-1" role="search">
+          <div className="relative flex-1" role="search">
             <Search
               className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
               aria-hidden
@@ -91,7 +62,7 @@ export function FilterBar({
               aria-label="Suchbegriff"
               className="pl-9"
             />
-          </form>
+          </div>
         ) : null}
 
         <div className="flex items-center gap-2">
@@ -160,17 +131,8 @@ export function FilterBar({
 
 /** Datumsbereich-Filter für die Agenda. */
 export function DateRangeFilter() {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-
-  function apply(name: "from" | "to", value: string) {
-    const params = new URLSearchParams(searchParams.toString());
-    if (value) params.set(name, value);
-    else params.delete(name);
-    params.delete("page");
-    router.push(`${pathname}?${params.toString()}`, { scroll: false });
-  }
+  const { applyParam, searchParams } = useLiveSearch();
+  const apply = (name: "from" | "to", value: string) => applyParam(name, value);
 
   return (
     <>

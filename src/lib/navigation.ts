@@ -82,6 +82,7 @@ export function dashboardNavigation(role: Role): NavGroup[] {
         { href: "/dashboard/seite", label: "Meine Seite", icon: "layout" },
         { href: "/dashboard/veranstaltungen", label: "Veranstaltungen", icon: "calendar" },
         { href: "/dashboard/galerie", label: "Galerie", icon: "image" },
+        { href: "/dashboard/qr-code", label: "QR-Code", icon: "layout" },
         { href: "/dashboard/statistik", label: "Statistik", icon: "chart" },
       ],
     },

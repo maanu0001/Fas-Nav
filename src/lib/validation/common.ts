@@ -152,14 +152,19 @@ export const optionalDecimal = z
     return Math.round(num * 100) / 100;
   });
 
-/** Passwortrichtlinie für alle Accounts. */
+/**
+ * Passwortrichtlinie für alle Accounts.
+ *
+ * Massgeblich ist die Länge. Vorgeschriebene Zeichenklassen führen erfahrungs-
+ * gemäss zu vorhersehbaren Passwörtern wie "Passwort1!" und blockierten hier
+ * vor allem das Setzen brauchbarer Passwörter durch die Administration, ohne
+ * die Sicherheit zu erhöhen. Zwölf Zeichen ohne Zwänge sind widerstandsfähiger
+ * als zehn mit Zwängen; gespeichert wird ohnehin nur der bcrypt-Hash.
+ */
 export const password = z
   .string()
-  .min(10, "Das Passwort muss mindestens 10 Zeichen lang sein.")
-  .max(200, "Das Passwort ist zu lang.")
-  .refine((v) => /[a-z]/.test(v), "Das Passwort muss einen Kleinbuchstaben enthalten.")
-  .refine((v) => /[A-Z]/.test(v), "Das Passwort muss einen Grossbuchstaben enthalten.")
-  .refine((v) => /[0-9]/.test(v), "Das Passwort muss eine Ziffer enthalten.");
+  .min(12, "Das Passwort muss mindestens 12 Zeichen lang sein.")
+  .max(200, "Das Passwort ist zu lang.");
 
 export const paginationQuery = z.object({
   page: z.coerce.number().int().min(1).max(10_000).default(1),

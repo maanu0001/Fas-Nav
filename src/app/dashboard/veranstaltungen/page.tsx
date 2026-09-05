@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { CalendarPlus, Plus } from "lucide-react";
 
@@ -8,7 +9,7 @@ import { EmptyState } from "@/components/ui/states";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { PublicationBadge } from "@/components/dashboard/status-badge";
 import { EVENT_TYPE_LABELS, FEATURE_KEYS } from "@/lib/constants";
-import { requireOrganizationContext } from "@/lib/dashboard-context";
+import { getDashboardContext, requireOrganizationContext } from "@/lib/dashboard-context";
 import { formatDateTime, startOfToday } from "@/lib/dates";
 import { prisma } from "@/lib/prisma";
 import { featureAccess } from "@/lib/subscription";
@@ -18,6 +19,12 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Veranstaltungen" };
 
 export default async function EventsPage() {
+  // Admin und Team verwalten alle Veranstaltungen; ihre vollständige Liste ist
+  // die Agenda. Ohne diese Weiche landeten sie auf der Organisationsübersicht
+  // und hätten von hier aus keinen Zugang zu den Veranstaltungen.
+  const base = await getDashboardContext();
+  if (base.staff) redirect("/dashboard/agenda");
+
   const context = await requireOrganizationContext();
   const today = startOfToday();
 

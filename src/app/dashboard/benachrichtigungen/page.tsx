@@ -67,15 +67,21 @@ export default async function NotificationsPage() {
               </Card>
             );
 
+            // Jede Benachrichtigung führt über die Öffnen-Seite, die sie
+            // serverseitig als gelesen markiert und danach weiterleitet.
             return (
               <li key={notification.id}>
-                {notification.link ? (
-                  <Link href={notification.link} className="block">
-                    {content}
-                  </Link>
-                ) : (
-                  content
-                )}
+                <Link
+                  href={`/dashboard/benachrichtigungen/${notification.id}`}
+                  className="block"
+                  aria-label={
+                    notification.readAt
+                      ? notification.title
+                      : `${notification.title} (ungelesen)`
+                  }
+                >
+                  {content}
+                </Link>
               </li>
             );
           })}

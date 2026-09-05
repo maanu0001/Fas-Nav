@@ -1,12 +1,18 @@
 import type { Metadata } from "next";
 
 import { DashboardShell } from "@/components/dashboard/sidebar";
+import { MaintenanceScreen } from "@/components/maintenance/maintenance-screen";
 import { getDashboardContext } from "@/lib/dashboard-context";
 import { PUBLICATION_STATUS_LABELS, ROLE_LABELS } from "@/lib/constants";
+import { maintenanceScreenFor } from "@/lib/maintenance";
 import { dashboardNavigation } from "@/lib/navigation";
 import { prisma } from "@/lib/prisma";
 import { ticketScope } from "@/lib/queries/tickets";
 import type { Role } from "@prisma/client";
+
+// Das Dashboard ist immer benutzerbezogen und liest zudem den Wartungsmodus
+// aus der Datenbank. Es darf deshalb nicht vorab gerendert werden.
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: { default: "Dashboard", template: "%s | Fas-Nav Dashboard" },
@@ -14,6 +20,11 @@ export const metadata: Metadata = {
 };
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+  // Während der Wartung arbeitet nur die Administration weiter. Ein Login
+  // allein hebt den Wartungsmodus also nicht auf.
+  const maintenance = await maintenanceScreenFor();
+  if (maintenance) return <MaintenanceScreen message={maintenance.message} />;
+
   const context = await getDashboardContext();
   const role = context.user.role as Role;
 
