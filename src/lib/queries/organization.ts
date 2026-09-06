@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { notFound } from "next/navigation";
 
 import { prisma } from "@/lib/prisma";
@@ -12,7 +13,17 @@ const MEDIA_SELECT = { url: true, alt: true, width: true, height: true } as cons
  * Liefert null, wenn die Seite nicht veröffentlicht ist – Draft-Inhalte
  * bleiben damit auch bei bekanntem Slug unsichtbar.
  */
-export async function getPublicOrganization(slug: string, type: OrganizationType) {
+/**
+ * Profil für die öffentliche Seite.
+ *
+ * In `cache()` verpackt: generateMetadata und die Seite selbst rufen dieselbe
+ * Funktion mit denselben Argumenten auf. Ohne die Bündelung entstünden je
+ * Seitenaufruf zwei identische Datenbankabfragen.
+ */
+export const getPublicOrganization = cache(async function getPublicOrganization(
+  slug: string,
+  type: OrganizationType,
+) {
   const org = await prisma.organization.findFirst({
     where: { slug, type, status: "PUBLISHED" },
     select: {
@@ -49,6 +60,11 @@ export async function getPublicOrganization(slug: string, type: OrganizationType
       verification: true,
       claimStatus: true,
       isFeatured: true,
+      // Wird für die Entscheidung über die Indexierbarkeit gebraucht.
+      status: true,
+      logoId: true,
+      headerId: true,
+      _count: { select: { events: true, socialLinks: true, media: true } },
       metaTitle: true,
       metaDesc: true,
       updatedAt: true,
@@ -117,7 +133,7 @@ export async function getPublicOrganization(slug: string, type: OrganizationType
   });
 
   return org;
-}
+});
 
 export type PublicOrganization = NonNullable<Awaited<ReturnType<typeof getPublicOrganization>>>;
 

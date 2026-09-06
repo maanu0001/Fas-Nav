@@ -10,8 +10,52 @@ type SeoInput = {
   image?: string | null;
   type?: "website" | "article" | "profile";
   noIndex?: boolean;
+  /**
+   * Zusätzlich den Verweisen nicht folgen.
+   *
+   * Getrennt von noIndex, weil beides Verschiedenes bedeutet. Eine dünne
+   * Profilseite oder eine Filteransicht gehört nicht in den Index, ihre
+   * Verweise auf Kanton, Veranstalter und Termine sollen aber weiterhin
+   * verfolgt werden – sonst kappt die Massnahme genau die interne
+   * Verlinkung, die sie schützen soll. Nur wirklich private Seiten wie
+   * Anmeldung und Passwortvergabe setzen zusätzlich nofollow.
+   */
+  noFollow?: boolean;
   keywords?: string[];
 };
+
+/**
+ * Entscheidet über Canonical und Indexierung einer Listenseite.
+ *
+ * Listen werden über Adressparameter gefiltert, sortiert und geblättert. Daraus
+ * entstehen beliebig viele Adressen mit weitgehend denselben Inhalten. Die
+ * Regel dagegen:
+ *
+ * - Nur Blättern erzeugt eine eigene Seite. Seite 2 zeigt andere Einträge als
+ *   Seite 1 und bekommt deshalb ein Canonical auf sich selbst. Verwiese sie auf
+ *   Seite 1, würden ihre Einträge nie eigenständig bewertet.
+ * - Jeder andere Parameter – Suche, Kanton, Region, Sortierung, Ansicht –
+ *   erzeugt eine Auswahl, keine neue Seite. Diese Adressen zeigen per Canonical
+ *   auf die unveränderte Liste und tragen zusätzlich `noindex`. Das Canonical
+ *   allein wäre eine Empfehlung; erst `noindex` verhindert zuverlässig, dass
+ *   der Index mit Filterkombinationen zuwächst. Gefolgt wird den Verweisen
+ *   weiterhin, damit Google die verlinkten Detailseiten findet.
+ */
+export function listCanonical(
+  basisPfad: string,
+  params: Record<string, string | string[] | undefined>,
+): { path: string; noIndex: boolean } {
+  const seite = Number(Array.isArray(params.page) ? params.page[0] : params.page);
+  const geblaettert = Number.isFinite(seite) && seite > 1;
+
+  const weitereFilter = Object.entries(params).some(
+    ([schluessel, wert]) => schluessel !== "page" && wert !== undefined && wert !== "",
+  );
+
+  if (weitereFilter) return { path: basisPfad, noIndex: true };
+  if (geblaettert) return { path: `${basisPfad}?page=${Math.floor(seite)}`, noIndex: false };
+  return { path: basisPfad, noIndex: false };
+}
 
 /** Baut konsistente Metadaten inklusive canonical URL und OpenGraph. */
 export function buildMetadata({
@@ -21,6 +65,7 @@ export function buildMetadata({
   image,
   type = "website",
   noIndex = false,
+  noFollow = false,
   keywords,
 }: SeoInput): Metadata {
   const url = absoluteUrl(path);
@@ -33,7 +78,7 @@ export function buildMetadata({
     keywords,
     alternates: { canonical: url },
     robots: noIndex
-      ? { index: false, follow: false }
+      ? { index: false, follow: !noFollow }
       : { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1 },
     openGraph: {
       type: type === "profile" ? "website" : type,

@@ -8,6 +8,7 @@ import {
   organizationEvents,
   relatedOrganizations,
 } from "@/lib/queries/organization";
+import { isIndexableOrganization } from "@/lib/indexability";
 import { breadcrumbJsonLd, buildMetadata, jsonLdScript, organizationJsonLd } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -27,6 +28,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       org.shortDescription ||
       `${org.name} aus ${org.city} (${org.canton.name}): Auftritte, Geschichte, Repertoire und Kontakt der Guggenmusik.`,
     path: `/gugge/${org.slug}`,
+    // Ein sehr dünnes Profil bleibt öffentlich erreichbar und intern
+    // verlinkt, gehört aber nicht in den Suchindex. Dieselbe Funktion
+    // entscheidet über die Aufnahme in die Sitemap.
+    noIndex: !isIndexableOrganization(org),
     image: org.ogImage?.url ?? org.header?.url ?? org.logo?.url,
     type: "profile",
     keywords: [

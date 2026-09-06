@@ -13,6 +13,7 @@ export default function robots(): MetadataRoute.Robots {
       },
     ],
     sitemap: absoluteUrl("/sitemap.xml"),
-    host: absoluteUrl("/"),
+    // Keine Host-Direktive: Sie wird von Google nicht ausgewertet und die
+    // bevorzugte Adresse steht bereits im Canonical jeder Seite.
   };
 }

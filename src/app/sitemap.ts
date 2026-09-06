@@ -2,6 +2,11 @@ import type { MetadataRoute } from "next";
 
 import { prisma } from "@/lib/prisma";
 import { startOfToday } from "@/lib/dates";
+import {
+  INDEXABILITY_SELECT,
+  indexableEventWhere,
+  isIndexableOrganization,
+} from "@/lib/indexability";
 import { absoluteUrl } from "@/lib/utils";
 
 // Der Sitemap-Inhalt richtet sich nach dem aktuellen Datenbestand.
@@ -27,15 +32,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   try {
     const [organizations, events, cantons] = await Promise.all([
+      // Geladen wird alles Veröffentlichte; über die Aufnahme entscheidet
+      // anschliessend dieselbe Funktion, die auch das Meta-Robots-Tag der
+      // Profilseite setzt. So kann die Sitemap nicht von der Seite abweichen.
       prisma.organization.findMany({
         where: { status: "PUBLISHED" },
-        select: { slug: true, type: true, updatedAt: true },
-        take: 5000,
+        select: { slug: true, type: true, updatedAt: true, ...INDEXABILITY_SELECT },
+        take: 10000,
       }),
       prisma.event.findMany({
         where: {
-          status: "PUBLISHED",
-          organization: { status: "PUBLISHED" },
+          ...indexableEventWhere,
           // Lange vergangene Termine belasten die Sitemap unnötig.
           OR: [
             { endDate: { gte: startOfToday() } },
@@ -43,7 +50,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           ],
         },
         select: { slug: true, updatedAt: true },
-        take: 5000,
+        take: 10000,
       }),
       prisma.canton.findMany({ select: { slug: true, updatedAt: true } }),
     ]);
@@ -56,7 +63,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         changeFrequency: "weekly" as const,
         priority: 0.8,
       })),
-      ...organizations.map((org) => ({
+      ...organizations.filter(isIndexableOrganization).map((org) => ({
         url: absoluteUrl(
           org.type === "CARNIVAL" ? `/fasnacht/${org.slug}` : `/gugge/${org.slug}`,
         ),

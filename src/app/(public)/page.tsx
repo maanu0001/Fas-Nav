@@ -25,7 +25,11 @@ import { PUBLIC_EVENT_SELECT, publishedEventWhere } from "@/lib/queries/public";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = buildMetadata({
-  title: `${SITE.name} – ${SITE.tagline}`,
+  // Der Markenname hängt bereits über die Vorlage des Wurzel-Layouts hinten
+  // an. Vorher stand er zusätzlich am Anfang – die wertvollste Stelle des
+  // Titels ging damit für ein zweites Mal „Fas-Nav.ch“ drauf. Nun steht dort,
+  // worum es geht.
+  title: "Fasnacht Schweiz – Fasnachten, Guggen und Veranstaltungen",
   description: SITE.description,
   path: "/",
   keywords: [

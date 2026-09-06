@@ -2,18 +2,34 @@ import type { Metadata } from "next";
 
 import { DirectoryView, hrefBuilder } from "@/components/public/directory-view";
 import { findOrganizations } from "@/lib/queries/public";
-import { buildMetadata } from "@/lib/seo";
+import { buildMetadata, listCanonical } from "@/lib/seo";
 import { directoryFilterSchema } from "@/lib/validation/schemas";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = buildMetadata({
-  title: "Guggenmusiken in der Schweiz – Verzeichnis",
-  description:
-    "Das Verzeichnis der Schweizer Guggenmusiken: Gründungsjahr, Region, Auftritte und Kontakt. Finde Guggen in deiner Nähe.",
-  path: "/guggen",
-  keywords: ["Guggenmusik Schweiz", "Guggen", "Guggenmusik", "Guggenverzeichnis"],
-});
+/**
+ * Metadata je nach Adressparametern.
+ *
+ * Geblätterte Seiten verweisen auf sich selbst, gefilterte auf die
+ * unveränderte Liste und tragen noindex – siehe listCanonical.
+ */
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}): Promise<Metadata> {
+  const params = await searchParams;
+  const { path, noIndex } = listCanonical("/guggen", params);
+
+  return buildMetadata({
+    title: "Guggen und Guggenmusiken in der Schweiz",
+    description:
+      "Das Verzeichnis der Schweizer Guggenmusiken: Gründungsjahr, Region, Auftritte und Kontakt. Finde Guggen in deiner Nähe.",
+    path,
+    keywords: ["Guggenmusik Schweiz", "Guggen", "Guggenmusik", "Guggenverzeichnis"],
+    noIndex,
+  });
+}
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -28,7 +44,7 @@ export default async function GuggenPage({ searchParams }: { searchParams: Searc
     <DirectoryView
       type="GUGGE"
       eyebrow="Verzeichnis"
-      title="Guggenmusiken in der Schweiz"
+      title="Guggen und Guggenmusiken in der Schweiz"
       description="Entdecke Guggenmusiken aus der ganzen Schweiz – mit Auftrittsterminen, Geschichte und Kontakt für Buchungsanfragen."
       result={result}
       buildHref={hrefBuilder("/guggen", raw)}

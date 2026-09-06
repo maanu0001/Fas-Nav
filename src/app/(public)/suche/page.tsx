@@ -27,6 +27,7 @@ export async function generateMetadata({
     path: "/suche",
     // Suchergebnisseiten gehören nicht in den Suchindex.
     noIndex: true,
+  noFollow: true,
   });
 }
 

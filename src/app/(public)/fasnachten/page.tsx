@@ -2,18 +2,34 @@ import type { Metadata } from "next";
 
 import { DirectoryView, hrefBuilder } from "@/components/public/directory-view";
 import { findOrganizations } from "@/lib/queries/public";
-import { buildMetadata } from "@/lib/seo";
+import { buildMetadata, listCanonical } from "@/lib/seo";
 import { directoryFilterSchema } from "@/lib/validation/schemas";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = buildMetadata({
-  title: "Fasnachten in der Schweiz – Verzeichnis",
-  description:
-    "Alle Schweizer Fasnachten im Überblick: Termine, Orte und Programme. Suche nach Name, Ort, Kanton oder Region.",
-  path: "/fasnachten",
-  keywords: ["Fasnacht Schweiz", "Fasnachten", "Fasnachtsverzeichnis", "Fasnacht Termine"],
-});
+/**
+ * Metadata je nach Adressparametern.
+ *
+ * Geblätterte Seiten verweisen auf sich selbst, gefilterte auf die
+ * unveränderte Liste und tragen noindex – siehe listCanonical.
+ */
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}): Promise<Metadata> {
+  const params = await searchParams;
+  const { path, noIndex } = listCanonical("/fasnachten", params);
+
+  return buildMetadata({
+    title: "Fasnachten in der Schweiz – Termine und Übersicht",
+    description:
+      "Alle Schweizer Fasnachten im Überblick: Termine, Orte und Programme. Suche nach Name, Ort, Kanton oder Region.",
+    path,
+    keywords: ["Fasnacht Schweiz", "Fasnachten", "Fasnachtsverzeichnis", "Fasnacht Termine"],
+    noIndex,
+  });
+}
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 

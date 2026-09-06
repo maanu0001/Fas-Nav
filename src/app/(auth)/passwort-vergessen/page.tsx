@@ -9,6 +9,7 @@ export const metadata: Metadata = buildMetadata({
   description: "Setze dein Passwort für Fas-Nav.ch zurück.",
   path: "/passwort-vergessen",
   noIndex: true,
+  noFollow: true,
 });
 
 export default function ForgotPasswordPage() {

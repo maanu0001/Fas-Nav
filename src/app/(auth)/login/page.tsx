@@ -11,6 +11,7 @@ export const metadata: Metadata = buildMetadata({
   description: "Melde dich bei Fas-Nav.ch an, um deine Organisation zu verwalten.",
   path: "/login",
   noIndex: true,
+  noFollow: true,
 });
 
 export default function LoginPage() {

@@ -20,6 +20,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description: "Übernimm das Profil deiner Organisation auf Fas-Nav.ch.",
     path: `/profil-uebernehmen/${slug}`,
     noIndex: true,
+  noFollow: true,
   });
 }
 

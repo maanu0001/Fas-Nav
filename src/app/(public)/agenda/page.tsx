@@ -11,20 +11,36 @@ import { CANTONS, EVENT_TYPE_LABELS, REGIONS } from "@/lib/constants";
 import { formatDate } from "@/lib/dates";
 import { buildEventWhere, findEvents, PUBLIC_EVENT_SELECT } from "@/lib/queries/public";
 import { prisma } from "@/lib/prisma";
-import { buildMetadata } from "@/lib/seo";
+import { buildMetadata, listCanonical } from "@/lib/seo";
 import { agendaFilterSchema } from "@/lib/validation/schemas";
 import { cn } from "@/lib/utils";
 import type { EventType } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = buildMetadata({
-  title: "Fasnachtsagenda Schweiz – alle Termine",
-  description:
-    "Die schweizweite Fasnachtsagenda: Umzüge, Guggenkonzerte, Monsterkonzerte, Maskenbälle und Kinderfasnachten. Filtere nach Datum, Kanton, Ort und Veranstaltungstyp.",
-  path: "/agenda",
-  keywords: ["Fasnacht Termine", "Fasnachtsagenda", "Umzug", "Guggenkonzert", "Monsterkonzert"],
-});
+/**
+ * Metadata je nach Adressparametern.
+ *
+ * Geblätterte Seiten verweisen auf sich selbst, gefilterte auf die
+ * unveränderte Liste und tragen noindex – siehe listCanonical.
+ */
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}): Promise<Metadata> {
+  const params = await searchParams;
+  const { path, noIndex } = listCanonical("/agenda", params);
+
+  return buildMetadata({
+    title: "Fasnachtsagenda Schweiz – Veranstaltungen und Termine",
+    description:
+      "Die schweizweite Fasnachtsagenda: Umzüge, Guggenkonzerte, Monsterkonzerte, Maskenbälle und Kinderfasnachten. Filtere nach Datum, Kanton, Ort und Veranstaltungstyp.",
+    path,
+    keywords: ["Fasnacht Termine", "Fasnachtsagenda", "Umzug", "Guggenkonzert", "Monsterkonzert"],
+    noIndex,
+  });
+}
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -87,7 +103,7 @@ export default async function AgendaPage({ searchParams }: { searchParams: Searc
           <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-accent-700">
             Schweizweit
           </p>
-          <h1 className="font-display text-3xl font-bold sm:text-4xl">Fasnachtsagenda</h1>
+          <h1 className="font-display text-3xl font-bold sm:text-4xl">Fasnachtsagenda Schweiz</h1>
           <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-muted-foreground">
             Umzüge, Guggenkonzerte, Monsterkonzerte, Maskenbälle und Kinderfasnachten – alle
             Termine der Schweizer Fasnacht an einem Ort.
